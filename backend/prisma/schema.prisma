@@ -58,7 +58,7 @@ model TutorProfile {
   createdAt     DateTime        @default(now())
   updatedAt     DateTime        @updatedAt
 
-  user          User            @relation("TutorUser", fields: [userId], references: [id])
+  user          User            @relation("TutorUser", fields: [userId], references: [id], onDelete: Cascade)
   applications  Application[]   @relation("TutorApplications")
   reviews       Review[]
   uploads       FileUpload[]
@@ -76,13 +76,13 @@ model StudentProfile {
   createdAt     DateTime        @default(now())
   updatedAt     DateTime        @updatedAt
 
-  user          User            @relation("StudentUser", fields: [userId], references: [id])
+  user          User            @relation("StudentUser", fields: [userId], references: [id], onDelete: Cascade)
   uploads       FileUpload[]
   reviews       Review[]
   tutors        TutorProfile[]  @relation("TutorStudents")
   applications  Application[]   @relation("StudentApplications")
 
-  materialAccesses MaterialAccess[] 
+  materialAccesses MaterialAccess[]
 }
 
 
@@ -97,8 +97,10 @@ model Application {
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
 
-  student       StudentProfile   @relation("StudentApplications", fields: [studentId], references: [id])
-  tutor         TutorProfile     @relation("TutorApplications", fields: [tutorId], references: [id])
+  student       StudentProfile   @relation("StudentApplications", fields: [studentId], references: [id], onDelete: Cascade)
+  tutor         TutorProfile     @relation("TutorApplications", fields: [tutorId], references: [id], onDelete: Cascade)
+
+  @@unique([studentId, tutorId])
 }
 
 model Review {
@@ -110,8 +112,10 @@ model Review {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  tutor     TutorProfile   @relation(fields: [tutorId], references: [id])
-  student   StudentProfile @relation(fields: [studentId], references: [id])
+  tutor     TutorProfile   @relation(fields: [tutorId], references: [id], onDelete: Cascade)
+  student   StudentProfile @relation(fields: [studentId], references: [id], onDelete: Cascade)
+
+  @@unique([tutorId, studentId])
 }
 
 model FileUpload {
@@ -123,10 +127,11 @@ model FileUpload {
   filePath      String
   fileType      String
   createdAt     DateTime        @default(now())
+  updatedAt     DateTime        @updatedAt
 
-  user          User            @relation(fields: [userId], references: [id])
-  tutor         TutorProfile?   @relation(fields: [tutorId], references: [id])
-  student       StudentProfile? @relation(fields: [studentId], references: [id])
+  user          User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  tutor         TutorProfile?   @relation(fields: [tutorId], references: [id], onDelete: SetNull)
+  student       StudentProfile? @relation(fields: [studentId], references: [id], onDelete: SetNull)
 }
 
 model Material {
@@ -135,8 +140,9 @@ model Material {
   fileUrl   String
   tutorId   String
   createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
-  tutor           TutorProfile     @relation(fields: [tutorId], references: [id])
+  tutor           TutorProfile     @relation(fields: [tutorId], references: [id], onDelete: Cascade)
   allowedStudents MaterialAccess[] @relation("MaterialToAccess")
 }
 
@@ -146,8 +152,10 @@ model MaterialAccess {
   materialId String
   studentId  String
 
-  material   Material        @relation("MaterialToAccess", fields: [materialId], references: [id])
-  student    StudentProfile  @relation(fields: [studentId], references: [id])
+  material   Material        @relation("MaterialToAccess", fields: [materialId], references: [id], onDelete: Cascade)
+  student    StudentProfile  @relation(fields: [studentId], references: [id], onDelete: Cascade)
+
+  @@unique([materialId, studentId])
 }
 
 
