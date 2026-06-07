@@ -8,6 +8,8 @@ import { PaymentKind, PaymentMethod, PaymentStatus } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 import { MailService } from '../mail/mail.service';
 import { PlatformBankService } from '../platform-bank/platform-bank.service';
+import { PaginationQueryDto } from '../common/dto/pagination.dto';
+import { paginatePrisma } from '../common/paginate';
 import { ReferralsService } from '../referrals/referrals.service';
 
 const COMMISSION_PCT = parseInt(
@@ -235,15 +237,15 @@ export class PaymentsService {
     });
   }
 
-  listUnderReview() {
-    return this.prisma.payment.findMany({
+  listUnderReview(pagination: PaginationQueryDto) {
+    return paginatePrisma(this.prisma.payment, pagination, {
       where: { status: PaymentStatus.UNDER_REVIEW },
       orderBy: { createdAt: 'asc' },
     });
   }
 
-  listMine(payerId: string) {
-    return this.prisma.payment.findMany({
+  listMine(payerId: string, pagination: PaginationQueryDto) {
+    return paginatePrisma(this.prisma.payment, pagination, {
       where: { payerId },
       orderBy: { createdAt: 'desc' },
     });

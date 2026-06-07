@@ -2,6 +2,8 @@ import { Injectable, NotFoundException } from '@nestjs/common';
 import * as bcrypt from 'bcryptjs';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { PrismaService } from '../prisma/prisma.service';
+import { PaginationQueryDto } from '../common/dto/pagination.dto';
+import { paginatePrisma } from '../common/paginate';
 
 const SAFE_SELECT = {
   id: true,
@@ -17,21 +19,11 @@ const SAFE_SELECT = {
 export class UsersService {
   constructor(private prisma: PrismaService) {}
 
-  async findAll(skip = 0, take = 50) {
-    const safeTake = Math.min(Math.max(take, 1), 100);
-    const safeSkip = Math.max(skip, 0);
-
-    const [data, total] = await this.prisma.$transaction([
-      this.prisma.user.findMany({
-        skip: safeSkip,
-        take: safeTake,
-        select: SAFE_SELECT,
-        orderBy: { createdAt: 'desc' },
-      }),
-      this.prisma.user.count(),
-    ]);
-
-    return { data, total };
+  async findAll(query: PaginationQueryDto) {
+    return paginatePrisma(this.prisma.user, query, {
+      select: SAFE_SELECT,
+      orderBy: { createdAt: 'desc' },
+    });
   }
 
   async findOne(id: string) {

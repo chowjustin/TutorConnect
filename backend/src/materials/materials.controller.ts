@@ -23,6 +23,7 @@ import { MaterialsService } from './materials.service';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { RolesGuard } from '../auth/roles.guard';
 import { Roles } from '../auth/roles.decorator';
+import { PaginationQueryDto } from '../common/dto/pagination.dto';
 import {
   materialFileFilter,
   multerLimits,
@@ -69,6 +70,7 @@ export class MaterialsController {
   async getTutorMaterials(
     @Param('tutorProfileId') tutorProfileId: string,
     @Req() req: AuthedRequest,
+    @Query() pagination: PaginationQueryDto,
     @Query('subject') subject?: string,
     @Query('level') level?: string,
     @Query('kind') kind?: string,
@@ -78,17 +80,22 @@ export class MaterialsController {
       tutorProfileId,
     );
     if (!ok) throw new ForbiddenException('Not your tutor profile');
-    return this.materialsService.getMaterialsForTutor(tutorProfileId, {
-      subject: this.parseSubject(subject),
-      level: this.parseLevel(level),
-      kind: this.parseKind(kind),
-    });
+    return this.materialsService.getMaterialsForTutor(
+      tutorProfileId,
+      pagination,
+      {
+        subject: this.parseSubject(subject),
+        level: this.parseLevel(level),
+        kind: this.parseKind(kind),
+      },
+    );
   }
 
   @Get('student/:studentProfileId')
   async getStudentMaterials(
     @Param('studentProfileId') studentProfileId: string,
     @Req() req: AuthedRequest,
+    @Query() pagination: PaginationQueryDto,
     @Query('subject') subject?: string,
     @Query('level') level?: string,
     @Query('kind') kind?: string,
@@ -98,11 +105,15 @@ export class MaterialsController {
       studentProfileId,
     );
     if (!ok) throw new ForbiddenException('Not your student profile');
-    return this.materialsService.getMaterialsForStudent(studentProfileId, {
-      subject: this.parseSubject(subject),
-      level: this.parseLevel(level),
-      kind: this.parseKind(kind),
-    });
+    return this.materialsService.getMaterialsForStudent(
+      studentProfileId,
+      pagination,
+      {
+        subject: this.parseSubject(subject),
+        level: this.parseLevel(level),
+        kind: this.parseKind(kind),
+      },
+    );
   }
 
   private parseSubject(v?: string): Subject | undefined {

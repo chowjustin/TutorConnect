@@ -13,6 +13,9 @@ import {
 } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 import { MailService } from '../mail/mail.service';
+import { PaginationQueryDto } from '../common/dto/pagination.dto';
+import { paginateArray, paginatePrisma } from '../common/paginate';
+import { paginated } from '../common/dto/paginated.dto';
 import { isInsideSlot } from '../common/tz';
 import { CreateSessionDto } from './dto/create-session.dto';
 
@@ -197,30 +200,37 @@ export class SessionsService {
     });
   }
 
-  async listForStudent(email: string, past = false) {
+  async listForStudent(
+    email: string,
+    pagination: PaginationQueryDto,
+    past = false,
+  ) {
     const user = await this.prisma.user.findUnique({
       where: { email },
       include: { studentProfile: true },
     });
-    if (!user?.studentProfile) return [];
-    const where: Prisma.SessionWhereInput = {
-      attendees: { some: { studentId: user.studentProfile.id } },
-      startsAt: past ? { lt: new Date() } : { gte: new Date() },
-    };
-    return this.prisma.session.findMany({
-      where,
+    if (!user?.studentProfile) return paginated([], 0);
+    return paginatePrisma(this.prisma.session, pagination, {
+      where: {
+        attendees: { some: { studentId: user.studentProfile.id } },
+        startsAt: past ? { lt: new Date() } : { gte: new Date() },
+      },
       include: { tutor: { include: { user: true } }, attendees: true },
       orderBy: { startsAt: past ? 'desc' : 'asc' },
     });
   }
 
-  async listForTutor(email: string, past = false) {
+  async listForTutor(
+    email: string,
+    pagination: PaginationQueryDto,
+    past = false,
+  ) {
     const user = await this.prisma.user.findUnique({
       where: { email },
       include: { tutorProfile: true },
     });
-    if (!user?.tutorProfile) return [];
-    return this.prisma.session.findMany({
+    if (!user?.tutorProfile) return paginated([], 0);
+    return paginatePrisma(this.prisma.session, pagination, {
       where: {
         tutorId: user.tutorProfile.id,
         startsAt: past ? { lt: new Date() } : { gte: new Date() },

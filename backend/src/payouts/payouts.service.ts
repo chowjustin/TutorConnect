@@ -8,6 +8,9 @@ import {
 import { PayoutStatus, VerificationStatus } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 import { MailService } from '../mail/mail.service';
+import { PaginationQueryDto } from '../common/dto/pagination.dto';
+import { paginatePrisma } from '../common/paginate';
+import { paginated } from '../common/dto/paginated.dto';
 
 const MIN_PAYOUT = parseInt(process.env.MIN_PAYOUT_RUPIAH || '50000', 10);
 
@@ -93,20 +96,20 @@ export class PayoutsService {
     });
   }
 
-  async listMine(email: string) {
+  async listMine(email: string, pagination: PaginationQueryDto) {
     const user = await this.prisma.user.findUnique({
       where: { email },
       include: { tutorProfile: true },
     });
-    if (!user?.tutorProfile) return [];
-    return this.prisma.payout.findMany({
+    if (!user?.tutorProfile) return paginated([], 0);
+    return paginatePrisma(this.prisma.payout, pagination, {
       where: { tutorId: user.tutorProfile.id },
       orderBy: { requestedAt: 'desc' },
     });
   }
 
-  listQueue() {
-    return this.prisma.payout.findMany({
+  listQueue(pagination: PaginationQueryDto) {
+    return paginatePrisma(this.prisma.payout, pagination, {
       where: { status: PayoutStatus.REQUESTED },
       orderBy: { requestedAt: 'asc' },
     });

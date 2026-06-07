@@ -5,6 +5,8 @@ import {
 } from '@nestjs/common';
 import { EducationLevel, MaterialKind, Subject } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
+import { PaginationQueryDto } from '../common/dto/pagination.dto';
+import { paginatePrisma } from '../common/paginate';
 
 @Injectable()
 export class MaterialsService {
@@ -76,9 +78,10 @@ export class MaterialsService {
 
   async getMaterialsForTutor(
     tutorProfileId: string,
+    pagination: PaginationQueryDto,
     filters?: { subject?: Subject; level?: EducationLevel; kind?: MaterialKind },
   ) {
-    return this.prisma.material.findMany({
+    return paginatePrisma(this.prisma.material, pagination, {
       where: {
         tutorId: tutorProfileId,
         subject: filters?.subject,
@@ -96,9 +99,10 @@ export class MaterialsService {
 
   async getMaterialsForStudent(
     studentProfileId: string,
+    pagination: PaginationQueryDto,
     filters?: { subject?: Subject; level?: EducationLevel; kind?: MaterialKind },
   ) {
-    return this.prisma.material.findMany({
+    return paginatePrisma(this.prisma.material, pagination, {
       where: {
         allowedStudents: { some: { studentId: studentProfileId } },
         subject: filters?.subject,

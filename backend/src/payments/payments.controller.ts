@@ -6,6 +6,7 @@ import {
   Param,
   Patch,
   Post,
+  Query,
   Request,
   UploadedFile,
   UseGuards,
@@ -19,6 +20,7 @@ import { Roles } from '../auth/roles.decorator';
 import { EmailVerified } from '../auth/email-verified.decorator';
 import { EmailVerifiedGuard } from '../auth/email-verified.guard';
 import { IdempotencyInterceptor } from '../common/idempotency.interceptor';
+import { PaginationQueryDto } from '../common/dto/pagination.dto';
 import { multerStorage, materialFileFilter } from '../upload/multer.config';
 import { PaymentsService } from './payments.service';
 import { RejectPaymentDto, UploadProofDto } from './dto/upload-proof.dto';
@@ -56,8 +58,8 @@ export class PaymentsController {
   }
 
   @Get('mine')
-  mine(@Request() req) {
-    return this.svc.listMine(req.user.sub);
+  mine(@Request() req, @Query() pagination: PaginationQueryDto) {
+    return this.svc.listMine(req.user.sub, pagination);
   }
 }
 
@@ -68,8 +70,8 @@ export class AdminPaymentsController {
 
   @Roles(UserRole.ADMIN)
   @Get()
-  listQueue() {
-    return this.svc.listUnderReview();
+  listQueue(@Query() pagination: PaginationQueryDto) {
+    return this.svc.listUnderReview(pagination);
   }
 
   @Roles(UserRole.ADMIN)

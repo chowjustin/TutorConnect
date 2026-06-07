@@ -5,6 +5,7 @@ import {
   Get,
   Param,
   Post,
+  Query,
   Request,
   UploadedFile,
   UseGuards,
@@ -18,6 +19,7 @@ import { Roles } from '../auth/roles.decorator';
 import { EmailVerified } from '../auth/email-verified.decorator';
 import { EmailVerifiedGuard } from '../auth/email-verified.guard';
 import { IdempotencyInterceptor } from '../common/idempotency.interceptor';
+import { PaginationQueryDto } from '../common/dto/pagination.dto';
 import { multerStorage, materialFileFilter } from '../upload/multer.config';
 import { PayoutsService } from './payouts.service';
 import { RejectPayoutDto, RequestPayoutDto } from './dto/payout.dto';
@@ -43,8 +45,8 @@ export class TutorPayoutsController {
 
   @Roles(UserRole.TUTOR)
   @Get('payouts')
-  listMine(@Request() req) {
-    return this.svc.listMine(req.user.email);
+  listMine(@Request() req, @Query() pagination: PaginationQueryDto) {
+    return this.svc.listMine(req.user.email, pagination);
   }
 }
 
@@ -55,8 +57,8 @@ export class AdminPayoutsController {
 
   @Roles(UserRole.ADMIN)
   @Get()
-  queue() {
-    return this.svc.listQueue();
+  queue(@Query() pagination: PaginationQueryDto) {
+    return this.svc.listQueue(pagination);
   }
 
   @Roles(UserRole.ADMIN)

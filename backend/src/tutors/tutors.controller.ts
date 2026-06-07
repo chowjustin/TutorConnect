@@ -25,6 +25,7 @@ import {
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { RolesGuard } from '../auth/roles.guard';
 import { Roles } from '../auth/roles.decorator';
+import { PaginationQueryDto } from '../common/dto/pagination.dto';
 
 @UseGuards(JwtAuthGuard, RolesGuard)
 @Controller('tutors')
@@ -33,6 +34,7 @@ export class TutorsController {
 
   @Get('search')
   async searchTutorsForStudent(
+    @Query() pagination: PaginationQueryDto,
     @Query('name') name?: string,
     @Query('subject') subject?: string,
     @Query('minRate') minRate?: string,
@@ -76,6 +78,7 @@ export class TutorsController {
       sortBy: validSort,
       excludeSelf: true,
       email,
+      pagination,
     });
   }
 
@@ -118,8 +121,11 @@ export class TutorsController {
   }
 
   @Get(':email/students')
-  async listAllStudents(@Param('email') email: string) {
-    return this.tutorsService.listAllStudents(email);
+  async listAllStudents(
+    @Param('email') email: string,
+    @Query() pagination: PaginationQueryDto,
+  ) {
+    return this.tutorsService.listAllStudents(email, pagination);
   }
 
   @Roles(UserRole.TUTOR)
@@ -164,8 +170,8 @@ export class AdminTutorsController {
 
   @Roles(UserRole.ADMIN)
   @Get('verification')
-  listPending() {
-    return this.tutorsService.listPendingVerification();
+  listPending(@Query() pagination: PaginationQueryDto) {
+    return this.tutorsService.listPendingVerification(pagination);
   }
 
   @Roles(UserRole.ADMIN)

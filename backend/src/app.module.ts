@@ -28,6 +28,7 @@ import { DashboardsModule } from './dashboards/dashboards.module';
 import { TrackingModule } from './tracking/tracking.module';
 import { CronService } from './common/cron.service';
 import { ActivityInterceptor } from './common/activity.interceptor';
+import { TransformInterceptor } from './common/transform.interceptor';
 import { SubscriptionModule as _Sub } from './subscription/subscription.module';
 import { FeaturedModule as _Feat } from './featured/featured.module';
 import { MailModule } from './mail/mail.module';
@@ -67,6 +68,7 @@ import { MailModule } from './mail/mail.module';
     CronService,
     { provide: APP_GUARD, useClass: ThrottlerGuard },
     { provide: APP_FILTER, useClass: PrismaExceptionFilter },
+    { provide: APP_INTERCEPTOR, useClass: TransformInterceptor },
     { provide: APP_INTERCEPTOR, useClass: ActivityInterceptor },
   ],
 })

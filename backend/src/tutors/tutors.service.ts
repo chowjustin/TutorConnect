@@ -15,6 +15,8 @@ import { PrismaService } from '../prisma/prisma.service';
 import { MailService } from '../mail/mail.service';
 import { TrackingService } from '../tracking/tracking.service';
 import { UpdateTutorDto } from './dto/update-tutor.dto';
+import { PaginationQueryDto } from '../common/dto/pagination.dto';
+import { paginateArray, paginatePrisma } from '../common/paginate';
 
 const COMPLETENESS_WEIGHTS = {
   bio: 10,
@@ -171,8 +173,8 @@ export class TutorsService {
     });
   }
 
-  async listPendingVerification() {
-    return this.prisma.tutorProfile.findMany({
+  async listPendingVerification(pagination: PaginationQueryDto) {
+    return paginatePrisma(this.prisma.tutorProfile, pagination, {
       where: { verificationStatus: VerificationStatus.PENDING },
       include: { user: { select: { id: true, name: true, email: true } } },
       orderBy: { updatedAt: 'asc' },
@@ -221,6 +223,7 @@ export class TutorsService {
     sortBy?: 'rating' | 'priceAsc' | 'priceDesc' | 'featured';
     excludeSelf?: boolean;
     email?: string;
+    pagination?: PaginationQueryDto;
   }) {
     const filters: Prisma.TutorProfileWhereInput[] = [
       { publishedAt: { not: null } },
@@ -298,7 +301,7 @@ export class TutorsService {
     // log search analytics (fire-and-forget)
     this.tracking.logSearch(null, opts as any, enriched.length);
 
-    return enriched;
+    return paginateArray(enriched, opts.pagination ?? {});
   }
 
   async rateSuggestion(opts: {
@@ -445,7 +448,7 @@ export class TutorsService {
     });
   }
 
-  async listAllStudents(tutorEmail: string) {
+  async listAllStudents(tutorEmail: string, pagination: PaginationQueryDto) {
     const tutorUser = await this.prisma.user.findUnique({
       where: { email: tutorEmail },
       include: {
@@ -459,13 +462,14 @@ export class TutorsService {
       throw new NotFoundException('Tutor profile not found');
     }
 
-    return tutorUser.tutorProfile.students.map((student) => ({
+    const mapped = tutorUser.tutorProfile.students.map((student) => ({
       id: student.id,
       name: student.user.name,
       email: student.user.email,
       phoneNumber: student.user.phoneNumber,
       role: student.user.role,
     }));
+    return paginateArray(mapped, pagination);
   }
 
   async removeStudent(tutorEmail: string, studentId: string) {

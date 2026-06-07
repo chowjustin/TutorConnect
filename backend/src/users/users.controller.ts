@@ -5,7 +5,6 @@ import {
   ForbiddenException,
   Get,
   Param,
-  ParseIntPipe,
   Patch,
   Query,
   Request,
@@ -17,6 +16,7 @@ import { UpdateUserDto } from './dto/update-user.dto';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { RolesGuard } from '../auth/roles.guard';
 import { Roles } from '../auth/roles.decorator';
+import { PaginationQueryDto } from '../common/dto/pagination.dto';
 
 @UseGuards(JwtAuthGuard, RolesGuard)
 @Controller('users')
@@ -25,11 +25,8 @@ export class UsersController {
 
   @Roles(UserRole.ADMIN)
   @Get()
-  findAll(
-    @Query('skip', new ParseIntPipe({ optional: true })) skip = 0,
-    @Query('take', new ParseIntPipe({ optional: true })) take = 50,
-  ) {
-    return this.usersService.findAll(skip, take);
+  findAll(@Query() query: PaginationQueryDto) {
+    return this.usersService.findAll(query);
   }
 
   @Get(':id')

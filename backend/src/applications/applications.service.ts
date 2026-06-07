@@ -8,6 +8,8 @@ import {
 import { PrismaService } from '../prisma/prisma.service';
 import { ApplicationStatus, Prisma } from '@prisma/client';
 import { MailService } from '../mail/mail.service';
+import { PaginationQueryDto } from '../common/dto/pagination.dto';
+import { paginatePrisma } from '../common/paginate';
 
 @Injectable()
 export class ApplicationsService {
@@ -107,17 +109,15 @@ export class ApplicationsService {
     return this.prisma.application.delete({ where: { id: applicationId } });
   }
 
-  async listForStudent(studentEmail: string) {
-    return this.prisma.application.findMany({
-      where: {
-        student: { user: { email: studentEmail } },
-      },
+  async listForStudent(studentEmail: string, pagination: PaginationQueryDto) {
+    return paginatePrisma(this.prisma.application, pagination, {
+      where: { student: { user: { email: studentEmail } } },
       include: { tutor: { include: { user: true } } },
       orderBy: { createdAt: 'desc' },
     });
   }
 
-  async listForTutor(tutorEmail: string) {
+  async listForTutor(tutorEmail: string, pagination: PaginationQueryDto) {
     const user = await this.prisma.user.findUnique({
       where: { email: tutorEmail },
       include: { tutorProfile: true },
@@ -127,11 +127,9 @@ export class ApplicationsService {
       throw new NotFoundException('Tutor profile not found');
     }
 
-    return this.prisma.application.findMany({
+    return paginatePrisma(this.prisma.application, pagination, {
       where: { tutorId: user.tutorProfile.id },
-      include: {
-        student: { include: { user: true } },
-      },
+      include: { student: { include: { user: true } } },
       orderBy: { createdAt: 'desc' },
     });
   }
