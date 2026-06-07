@@ -1,15 +1,200 @@
 import {
+  BadRequestException,
   ForbiddenException,
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
-import { Prisma, Subject } from '@prisma/client';
+import { Prisma, Subject, VerificationStatus } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
+import { MailService } from '../mail/mail.service';
 import { UpdateTutorDto } from './dto/update-tutor.dto';
+
+const COMPLETENESS_WEIGHTS = {
+  bio: 10,
+  educationBackground: 10,
+  teachingMethods: 10,
+  educationLevels: 5,
+  subjects: 10,
+  hourlyRate: 10,
+  introVideoUrl: 10,
+  whatsappNumber: 5,
+  bank: 10,
+  availability: 10,
+  verified: 10,
+};
+const PUBLISH_MIN_SCORE = 80;
 
 @Injectable()
 export class TutorsService {
-  constructor(private prisma: PrismaService) {}
+  constructor(
+    private prisma: PrismaService,
+    private mailService: MailService,
+  ) {}
+
+  computeCompleteness(
+    tutor: any,
+    hasAvailability: boolean,
+  ): { score: number; missing: string[] } {
+    const w = COMPLETENESS_WEIGHTS;
+    let score = 0;
+    const missing: string[] = [];
+
+    const add = (cond: boolean, weight: number, field: string) => {
+      if (cond) score += weight;
+      else missing.push(field);
+    };
+
+    add(!!tutor.bio, w.bio, 'bio');
+    add(!!tutor.educationBackground, w.educationBackground, 'educationBackground');
+    add(
+      Array.isArray(tutor.teachingMethods) && tutor.teachingMethods.length > 0,
+      w.teachingMethods,
+      'teachingMethods',
+    );
+    add(
+      Array.isArray(tutor.educationLevels) && tutor.educationLevels.length > 0,
+      w.educationLevels,
+      'educationLevels',
+    );
+    add(
+      Array.isArray(tutor.subjects) && tutor.subjects.length > 0,
+      w.subjects,
+      'subjects',
+    );
+    add(!!tutor.hourlyRate && tutor.hourlyRate > 0, w.hourlyRate, 'hourlyRate');
+    add(!!tutor.introVideoUrl, w.introVideoUrl, 'introVideoUrl');
+    add(!!tutor.whatsappNumber, w.whatsappNumber, 'whatsappNumber');
+    add(
+      !!tutor.bankName && !!tutor.bankAccountNumber && !!tutor.bankAccountHolder,
+      w.bank,
+      'bank',
+    );
+    add(hasAvailability, w.availability, 'availability');
+    add(tutor.verificationStatus === VerificationStatus.VERIFIED, w.verified, 'verification');
+
+    return { score, missing };
+  }
+
+  async getCompleteness(email: string) {
+    const tutorUser = await this.prisma.user.findUnique({
+      where: { email },
+      include: { tutorProfile: true },
+    });
+    if (!tutorUser?.tutorProfile) {
+      throw new NotFoundException('Tutor profile not found');
+    }
+    // availability count via legacy json or future AvailabilitySlot
+    const hasAvailability = !!tutorUser.tutorProfile.availability;
+    const { score, missing } = this.computeCompleteness(
+      tutorUser.tutorProfile,
+      hasAvailability,
+    );
+    return { score, missing, minRequired: PUBLISH_MIN_SCORE };
+  }
+
+  async publish(email: string) {
+    const tutorUser = await this.prisma.user.findUnique({
+      where: { email },
+      include: { tutorProfile: true },
+    });
+    if (!tutorUser?.tutorProfile) {
+      throw new NotFoundException('Tutor profile not found');
+    }
+    if (tutorUser.tutorProfile.verificationStatus !== VerificationStatus.VERIFIED) {
+      throw new ForbiddenException('Verify your account before publishing');
+    }
+    const hasAvailability = !!tutorUser.tutorProfile.availability;
+    const { score, missing } = this.computeCompleteness(
+      tutorUser.tutorProfile,
+      hasAvailability,
+    );
+    if (score < PUBLISH_MIN_SCORE) {
+      throw new BadRequestException({
+        message: `Profile completeness ${score}% below required ${PUBLISH_MIN_SCORE}%`,
+        missing,
+      });
+    }
+    return this.prisma.tutorProfile.update({
+      where: { id: tutorUser.tutorProfile.id },
+      data: { publishedAt: new Date() },
+    });
+  }
+
+  async unpublish(email: string) {
+    const tutorUser = await this.prisma.user.findUnique({
+      where: { email },
+      include: { tutorProfile: true },
+    });
+    if (!tutorUser?.tutorProfile) {
+      throw new NotFoundException('Tutor profile not found');
+    }
+    return this.prisma.tutorProfile.update({
+      where: { id: tutorUser.tutorProfile.id },
+      data: { publishedAt: null },
+    });
+  }
+
+  async submitVerification(
+    email: string,
+    idDocumentUrl: string,
+    educationProofUrl: string,
+  ) {
+    const tutorUser = await this.prisma.user.findUnique({
+      where: { email },
+      include: { tutorProfile: true },
+    });
+    if (!tutorUser?.tutorProfile) {
+      throw new NotFoundException('Tutor profile not found');
+    }
+    return this.prisma.tutorProfile.update({
+      where: { id: tutorUser.tutorProfile.id },
+      data: {
+        idDocumentUrl,
+        educationProofUrl,
+        verificationStatus: VerificationStatus.PENDING,
+        verificationNotes: null,
+      },
+    });
+  }
+
+  async listPendingVerification() {
+    return this.prisma.tutorProfile.findMany({
+      where: { verificationStatus: VerificationStatus.PENDING },
+      include: { user: { select: { id: true, name: true, email: true } } },
+      orderBy: { updatedAt: 'asc' },
+    });
+  }
+
+  async reviewVerification(
+    tutorProfileId: string,
+    status: VerificationStatus,
+    notes?: string,
+  ) {
+    const tutor = await this.prisma.tutorProfile.findUnique({
+      where: { id: tutorProfileId },
+      include: { user: true },
+    });
+    if (!tutor) throw new NotFoundException('Tutor profile not found');
+    if (status === VerificationStatus.PENDING) {
+      throw new BadRequestException('Cannot set status back to PENDING');
+    }
+    const updated = await this.prisma.tutorProfile.update({
+      where: { id: tutorProfileId },
+      data: {
+        verificationStatus: status,
+        verificationNotes: notes,
+        verifiedAt: status === VerificationStatus.VERIFIED ? new Date() : null,
+      },
+    });
+    this.mailService
+      .sendEmail(
+        tutor.user.email,
+        `Tutor verification ${status}`,
+        `Your verification was ${status}. ${notes ?? ''}`,
+      )
+      .catch((e) => console.error('verification mail failed', e));
+    return updated;
+  }
 
   async search(
     name?: string,

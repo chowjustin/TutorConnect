@@ -5,6 +5,7 @@ import {
   Get,
   Param,
   Patch,
+  Post,
   Query,
   Request,
   UseGuards,
@@ -12,6 +13,10 @@ import {
 import { Subject, UserRole } from '@prisma/client';
 import { TutorsService } from './tutors.service';
 import { UpdateTutorDto } from './dto/update-tutor.dto';
+import {
+  ReviewVerificationDto,
+  SubmitVerificationDto,
+} from './dto/verification.dto';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { RolesGuard } from '../auth/roles.guard';
 import { Roles } from '../auth/roles.decorator';
@@ -74,5 +79,51 @@ export class TutorsController {
   @Delete('students/:studentId')
   async removeStudent(@Param('studentId') studentId: string, @Request() req) {
     return this.tutorsService.removeStudent(req.user.email, studentId);
+  }
+
+  @Roles(UserRole.TUTOR)
+  @Get('me/completeness')
+  getCompleteness(@Request() req) {
+    return this.tutorsService.getCompleteness(req.user.email);
+  }
+
+  @Roles(UserRole.TUTOR)
+  @Post('publish')
+  publish(@Request() req) {
+    return this.tutorsService.publish(req.user.email);
+  }
+
+  @Roles(UserRole.TUTOR)
+  @Post('unpublish')
+  unpublish(@Request() req) {
+    return this.tutorsService.unpublish(req.user.email);
+  }
+
+  @Roles(UserRole.TUTOR)
+  @Post('verification')
+  submitVerification(@Request() req, @Body() dto: SubmitVerificationDto) {
+    return this.tutorsService.submitVerification(
+      req.user.email,
+      dto.idDocumentUrl,
+      dto.educationProofUrl,
+    );
+  }
+}
+
+@UseGuards(JwtAuthGuard, RolesGuard)
+@Controller('admin/tutors')
+export class AdminTutorsController {
+  constructor(private readonly tutorsService: TutorsService) {}
+
+  @Roles(UserRole.ADMIN)
+  @Get('verification')
+  listPending() {
+    return this.tutorsService.listPendingVerification();
+  }
+
+  @Roles(UserRole.ADMIN)
+  @Patch(':id/verification')
+  review(@Param('id') id: string, @Body() dto: ReviewVerificationDto) {
+    return this.tutorsService.reviewVerification(id, dto.status, dto.notes);
   }
 }

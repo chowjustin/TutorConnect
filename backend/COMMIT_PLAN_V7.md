@@ -86,7 +86,7 @@ Migration note: backfill existing tutor `whatsappNumber` with empty string; bloc
 
 ---
 
-### Commit 3 — [ ] `feat(be): tutor verification workflow, completeness score and publish gate`
+### Commit 3 — [x] `feat(be): tutor verification workflow, completeness score and publish gate`
 **Schema:**
 - `TutorProfile`: `verificationStatus VerificationStatus @default(PENDING)`, `verifiedAt DateTime?`, `verificationNotes String?`, `idDocumentUrl String?`, `educationProofUrl String?`, `publishedAt DateTime?`.
 - Enum `VerificationStatus { PENDING, VERIFIED, REJECTED }`.

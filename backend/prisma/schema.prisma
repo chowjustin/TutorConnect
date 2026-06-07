@@ -49,6 +49,12 @@ enum MaterialKind {
   SUMMARY
 }
 
+enum VerificationStatus {
+  PENDING
+  VERIFIED
+  REJECTED
+}
+
 
 model User {
   id              String           @id @default(cuid())
@@ -112,6 +118,12 @@ model TutorProfile {
   bankName           String?
   bankAccountNumber  String?
   bankAccountHolder  String?
+  verificationStatus VerificationStatus @default(PENDING)
+  verifiedAt         DateTime?
+  verificationNotes  String?
+  idDocumentUrl      String?
+  educationProofUrl  String?
+  publishedAt        DateTime?
   createdAt          DateTime         @default(now())
   updatedAt          DateTime         @updatedAt
 
