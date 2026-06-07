@@ -345,7 +345,7 @@ model Payout {
 
 ---
 
-### Commit 7 — [ ] `feat(be): subscription, featured listing, promo codes and student credit`
+### Commit 7 — [x] `feat(be): subscription, featured listing, promo codes and student credit`
 **Schema:**
 ```prisma
 enum PlanTier { FREE PREMIUM_STUDENT PRO_TUTOR }

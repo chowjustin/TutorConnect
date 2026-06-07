@@ -19,6 +19,9 @@ import { SessionsModule } from './sessions/sessions.module';
 import { PlatformBankModule } from './platform-bank/platform-bank.module';
 import { PaymentsModule } from './payments/payments.module';
 import { PayoutsModule } from './payouts/payouts.module';
+import { SubscriptionModule } from './subscription/subscription.module';
+import { FeaturedModule } from './featured/featured.module';
+import { PromoModule } from './promo/promo.module';
 
 @Module({
   imports: [
@@ -40,6 +43,9 @@ import { PayoutsModule } from './payouts/payouts.module';
     PlatformBankModule,
     PaymentsModule,
     PayoutsModule,
+    SubscriptionModule,
+    FeaturedModule,
+    PromoModule,
   ],
   controllers: [AppController],
   providers: [
