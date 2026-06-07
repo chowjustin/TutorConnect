@@ -35,6 +35,32 @@ export class UsersService {
     return user;
   }
 
+  /**
+   * Like findOne but joins profile FKs so the FE can hit
+   * /materials/tutor/:tutorProfileId etc without an extra round trip.
+   */
+  async findMe(id: string) {
+    const user = await this.prisma.user.findUnique({
+      where: { id },
+      select: {
+        ...SAFE_SELECT,
+        emailVerifiedAt: true,
+        referralCode: true,
+        referredById: true,
+        tutorProfile: { select: { id: true } },
+        studentProfile: { select: { id: true } },
+      },
+    });
+    if (!user) throw new NotFoundException(`User with ID ${id} not found`);
+    return {
+      ...user,
+      tutorProfileId: user.tutorProfile?.id ?? null,
+      studentProfileId: user.studentProfile?.id ?? null,
+      tutorProfile: undefined,
+      studentProfile: undefined,
+    };
+  }
+
   async update(id: string, updateUserDto: UpdateUserDto) {
     const exists = await this.prisma.user.findUnique({ where: { id } });
     if (!exists) throw new NotFoundException(`User with ID ${id} not found`);
