@@ -21,6 +21,11 @@ import { apiUrl } from '@/constant/env';
 import { getToken } from '@/lib/cookie';
 import type { PaginatedApiResponse } from '@/types/api';
 
+import { CalendarDays, Star } from 'lucide-react';
+import { PageHeader } from '@/components/ui/page-header';
+import { EmptyState } from '@/components/ui/empty-state';
+import { ReviewDialog } from './components/review-dialog';
+
 import type { SessionItem } from './types';
 
 export default function StudentSessionsPage() {
@@ -55,17 +60,38 @@ export default function StudentSessionsPage() {
     URL.revokeObjectURL(url);
   };
 
+  const [reviewTarget, setReviewTarget] = React.useState<{
+    tutorId: string;
+    tutorName?: string;
+  } | null>(null);
+
+  const empty = !isLoading && (data?.data.length ?? 0) === 0;
+
   return (
-    <div className='space-y-4'>
-      <div className='flex items-center justify-between'>
-        <h1 className='h2'>Sesi Saya</h1>
-        <Button variant='outline' size='sm' onClick={() => setPast((p) => !p)}>
-          {past ? 'Mendatang' : 'Riwayat'}
-        </Button>
-      </div>
+    <div className='space-y-6'>
+      <PageHeader
+        icon={CalendarDays}
+        title='Sesi Saya'
+        description={past ? 'Riwayat sesi belajar.' : 'Sesi mendatang.'}
+        actions={
+          <Button variant='outline' size='sm' onClick={() => setPast((p) => !p)}>
+            {past ? 'Mendatang' : 'Riwayat'}
+          </Button>
+        }
+      />
 
       {isLoading ? (
         <Skeleton className='h-40 w-full' />
+      ) : empty ? (
+        <EmptyState
+          icon={CalendarDays}
+          title={past ? 'Belum ada riwayat sesi' : 'Belum ada sesi terjadwal'}
+          description={
+            past
+              ? 'Sesi yang sudah selesai akan tampil di sini.'
+              : 'Pesan sesi dari tutor yang sudah menerima aplikasi Anda.'
+          }
+        />
       ) : (
         <Table>
           <TableHeader>
@@ -79,17 +105,17 @@ export default function StudentSessionsPage() {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {data?.data.map((s) => {
-              return (
-                <TableRow key={s.id}>
-                  <TableCell>{s.tutor?.user.name ?? '—'}</TableCell>
-                  <TableCell>{formatDateTimeId(s.startsAt)}</TableCell>
-                  <TableCell>{s.format}</TableCell>
-                  <TableCell>
-                    <StatusBadge kind='session' status={s.status} />
-                  </TableCell>
-                  <TableCell>{formatRupiah(s.pricePerSeat)}</TableCell>
-                  <TableCell>
+            {data?.data.map((s) => (
+              <TableRow key={s.id}>
+                <TableCell>{s.tutor?.user.name ?? '—'}</TableCell>
+                <TableCell>{formatDateTimeId(s.startsAt)}</TableCell>
+                <TableCell>{s.format}</TableCell>
+                <TableCell>
+                  <StatusBadge kind='session' status={s.status} />
+                </TableCell>
+                <TableCell className='mono'>{formatRupiah(s.pricePerSeat)}</TableCell>
+                <TableCell>
+                  <div className='flex gap-1'>
                     <Button
                       size='sm'
                       variant='outline'
@@ -97,13 +123,33 @@ export default function StudentSessionsPage() {
                     >
                       iCal
                     </Button>
-                  </TableCell>
-                </TableRow>
-              );
-            })}
+                    {s.status === 'COMPLETED' ? (
+                      <Button
+                        size='sm'
+                        onClick={() =>
+                          setReviewTarget({
+                            tutorId: s.tutorId,
+                            tutorName: s.tutor?.user.name,
+                          })
+                        }
+                      >
+                        <Star className='size-3.5' /> Ulasan
+                      </Button>
+                    ) : null}
+                  </div>
+                </TableCell>
+              </TableRow>
+            ))}
           </TableBody>
         </Table>
       )}
+
+      <ReviewDialog
+        open={!!reviewTarget}
+        onOpenChange={(v) => !v && setReviewTarget(null)}
+        tutorId={reviewTarget?.tutorId ?? ''}
+        tutorName={reviewTarget?.tutorName}
+      />
     </div>
   );
 }

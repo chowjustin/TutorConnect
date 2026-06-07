@@ -125,6 +125,9 @@ export function DashboardLayout({ role, user, children }: DashboardLayoutProps) 
           <SidebarTrigger />
           <Separator orientation='vertical' className='h-6' />
           <div className='flex-1' />
+          <kbd className='bg-primary-50 text-primary-700 border-primary-200 hidden h-7 items-center gap-1 rounded-md border px-2 text-xs font-medium md:inline-flex'>
+            <span className='mono text-[10px]'>⌘</span>K
+          </kbd>
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button variant='ghost' size='sm' className='gap-2 px-2'>

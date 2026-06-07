@@ -10,6 +10,7 @@ import { Toaster } from 'sonner';
 
 import api from '@/lib/api';
 import { BaseDialog } from '@/components/base-dialog';
+import { CommandPalette } from '@/components/command-palette';
 
 const defaultQueryFn: QueryFunction = async ({ queryKey }) => {
   const [url, params] = queryKey as [string, Record<string, unknown>?];
@@ -46,6 +47,7 @@ export function Providers({ children }: { children: React.ReactNode }) {
       {children}
       <Toaster richColors position='top-right' />
       <BaseDialog />
+      <CommandPalette />
     </QueryClientProvider>
   );
 }
