@@ -1,4 +1,4 @@
-import api from "./axios";
+import api from "./axios.disabled";
 
 const API_URL = "http://localhost:3000/api";
 
