@@ -1,5 +1,7 @@
 'use client';
 
+import { CheckCircle2, XCircle } from 'lucide-react';
+
 import { Button } from '@/components/ui/button';
 import {
   Card,
@@ -8,8 +10,7 @@ import {
   CardHeader,
   CardTitle,
 } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { VERIFICATION_STATUS } from '@/lib/status';
+import { StatusBadge } from '@/components/ui/status-badge';
 
 import type { CompletenessResponse, TutorProfile } from '../types';
 import { usePublish, useUnpublish } from '../hooks/mutation';
@@ -29,17 +30,14 @@ export function PublishGate({ profile, completeness }: Props) {
   const reachedScore =
     completeness !== undefined && completeness.score >= completeness.minRequired;
   const isPublished = !!profile.publishedAt;
-
   const canPublish = verified && reachedScore && !isPublished;
 
-  const v = VERIFICATION_STATUS[profile.verificationStatus];
-
   return (
-    <Card>
+    <Card className='shadow-sm hover:shadow-md hover:shadow-primary-500/5 transition-shadow'>
       <CardHeader>
         <CardTitle className='flex items-center gap-2'>
-          Status Publikasi{' '}
-          <Badge className={`${v.className} border-0`}>{v.label}</Badge>
+          Status Publikasi
+          <StatusBadge kind='verification' status={profile.verificationStatus} />
         </CardTitle>
         <CardDescription>
           {isPublished
@@ -48,13 +46,22 @@ export function PublishGate({ profile, completeness }: Props) {
         </CardDescription>
       </CardHeader>
       <CardContent className='space-y-3 text-sm'>
-        <ul className='space-y-1'>
-          <li>
-            {verified ? '✅' : '⛔'} Akun terverifikasi oleh admin
+        <ul className='space-y-2'>
+          <li className='flex items-center gap-2'>
+            {verified ? (
+              <CheckCircle2 className='size-4 shrink-0 text-emerald-600' />
+            ) : (
+              <XCircle className='size-4 shrink-0 text-muted-foreground' />
+            )}
+            Akun terverifikasi oleh admin
           </li>
-          <li>
-            {reachedScore ? '✅' : '⛔'} Kelengkapan profil minimum{' '}
-            {completeness?.minRequired ?? 80}%
+          <li className='flex items-center gap-2'>
+            {reachedScore ? (
+              <CheckCircle2 className='size-4 shrink-0 text-emerald-600' />
+            ) : (
+              <XCircle className='size-4 shrink-0 text-muted-foreground' />
+            )}
+            Kelengkapan profil minimum {completeness?.minRequired ?? 80}%
           </li>
         </ul>
         <div className='flex gap-2 pt-2'>

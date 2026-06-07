@@ -7,7 +7,6 @@ import api from '@/lib/api';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import {
   Table,
@@ -18,7 +17,7 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import { Skeleton } from '@/components/ui/skeleton';
-import { PAYOUT_STATUS } from '@/lib/status';
+import { StatusBadge } from '@/components/ui/status-badge';
 import { formatDateTimeId, formatRupiah } from '@/lib/format';
 import { usePagination } from '@/hooks/use-pagination';
 import { MIN_PAYOUT_RUPIAH } from '@/constant/common';
@@ -104,15 +103,12 @@ export default function PayoutsPage() {
               </TableHeader>
               <TableBody>
                 {data?.data.map((p) => {
-                  const m = PAYOUT_STATUS[p.status];
                   return (
                     <TableRow key={p.id}>
                       <TableCell>{formatDateTimeId(p.requestedAt)}</TableCell>
                       <TableCell>{formatRupiah(p.amount)}</TableCell>
                       <TableCell>
-                        <Badge className={`${m.className} border-0`}>
-                          {m.label}
-                        </Badge>
+                        <StatusBadge kind='payout' status={p.status} />
                       </TableCell>
                       <TableCell>
                         {p.paidAt ? formatDateTimeId(p.paidAt) : '—'}

@@ -3,7 +3,6 @@
 import { useQuery } from '@tanstack/react-query';
 
 import api from '@/lib/api';
-import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import {
   Table,
@@ -14,7 +13,7 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import { Skeleton } from '@/components/ui/skeleton';
-import { APPLICATION_STATUS } from '@/lib/status';
+import { StatusBadge } from '@/components/ui/status-badge';
 import { formatDateId } from '@/lib/format';
 import { usePagination } from '@/hooks/use-pagination';
 import type { PaginatedApiResponse } from '@/types/api';
@@ -63,7 +62,6 @@ export default function TutorApplicationsPage() {
           </TableHeader>
           <TableBody>
             {data?.data.map((app) => {
-              const m = APPLICATION_STATUS[app.status];
               return (
                 <TableRow key={app.id}>
                   <TableCell>
@@ -73,7 +71,7 @@ export default function TutorApplicationsPage() {
                     </div>
                   </TableCell>
                   <TableCell>
-                    <Badge className={`${m.className} border-0`}>{m.label}</Badge>
+                    <StatusBadge kind='application' status={app.status} />
                   </TableCell>
                   <TableCell className='max-w-xs truncate'>
                     {app.message ?? '—'}

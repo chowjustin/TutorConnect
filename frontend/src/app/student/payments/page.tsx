@@ -3,7 +3,6 @@
 import { useQuery } from '@tanstack/react-query';
 
 import api from '@/lib/api';
-import { Badge } from '@/components/ui/badge';
 import {
   Table,
   TableBody,
@@ -14,7 +13,7 @@ import {
 } from '@/components/ui/table';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
-import { PAYMENT_STATUS } from '@/lib/status';
+import { StatusBadge } from '@/components/ui/status-badge';
 import { formatDateTimeId, formatRupiah } from '@/lib/format';
 import { usePagination } from '@/hooks/use-pagination';
 import type { PaginatedApiResponse } from '@/types/api';
@@ -85,16 +84,13 @@ export default function StudentPaymentsPage() {
               </TableHeader>
               <TableBody>
                 {listQ.data?.data.map((p) => {
-                  const m = PAYMENT_STATUS[p.status];
                   return (
                     <TableRow key={p.id}>
                       <TableCell>{formatDateTimeId(p.createdAt)}</TableCell>
                       <TableCell>{p.kind}</TableCell>
                       <TableCell>{formatRupiah(p.netAmount)}</TableCell>
                       <TableCell>
-                        <Badge className={`${m.className} border-0`}>
-                          {m.label}
-                        </Badge>
+                        <StatusBadge kind='payment' status={p.status} />
                       </TableCell>
                     </TableRow>
                   );

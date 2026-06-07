@@ -4,7 +4,6 @@ import * as React from 'react';
 import { useQuery } from '@tanstack/react-query';
 
 import api from '@/lib/api';
-import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import {
   Table,
@@ -15,7 +14,7 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import { Skeleton } from '@/components/ui/skeleton';
-import { SESSION_STATUS } from '@/lib/status';
+import { StatusBadge } from '@/components/ui/status-badge';
 import { formatDateTimeId, formatRupiah } from '@/lib/format';
 import { usePagination } from '@/hooks/use-pagination';
 import { apiUrl } from '@/constant/env';
@@ -81,14 +80,13 @@ export default function StudentSessionsPage() {
           </TableHeader>
           <TableBody>
             {data?.data.map((s) => {
-              const m = SESSION_STATUS[s.status];
               return (
                 <TableRow key={s.id}>
                   <TableCell>{s.tutor?.user.name ?? '—'}</TableCell>
                   <TableCell>{formatDateTimeId(s.startsAt)}</TableCell>
                   <TableCell>{s.format}</TableCell>
                   <TableCell>
-                    <Badge className={`${m.className} border-0`}>{m.label}</Badge>
+                    <StatusBadge kind='session' status={s.status} />
                   </TableCell>
                   <TableCell>{formatRupiah(s.pricePerSeat)}</TableCell>
                   <TableCell>

@@ -4,7 +4,6 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
 import api from '@/lib/api';
 import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
 import {
   Table,
   TableBody,
@@ -14,7 +13,7 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import { Skeleton } from '@/components/ui/skeleton';
-import { PAYOUT_STATUS } from '@/lib/status';
+import { StatusBadge } from '@/components/ui/status-badge';
 import { formatDateTimeId, formatRupiah } from '@/lib/format';
 import { usePagination } from '@/hooks/use-pagination';
 import { notifyAxiosError, notifySuccess } from '@/lib/toast';
@@ -93,7 +92,6 @@ export default function AdminPayoutsPage() {
           </TableHeader>
           <TableBody>
             {data?.data.map((p) => {
-              const m = PAYOUT_STATUS[p.status];
               return (
                 <TableRow key={p.id}>
                   <TableCell>{formatDateTimeId(p.requestedAt)}</TableCell>
@@ -111,7 +109,7 @@ export default function AdminPayoutsPage() {
                   </TableCell>
                   <TableCell>{formatRupiah(p.amount)}</TableCell>
                   <TableCell>
-                    <Badge className={`${m.className} border-0`}>{m.label}</Badge>
+                    <StatusBadge kind='payout' status={p.status} />
                   </TableCell>
                   <TableCell>
                     {p.status === 'REQUESTED' ? (
