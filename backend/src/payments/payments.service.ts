@@ -8,6 +8,7 @@ import { PaymentKind, PaymentMethod, PaymentStatus } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 import { MailService } from '../mail/mail.service';
 import { PlatformBankService } from '../platform-bank/platform-bank.service';
+import { ReferralsService } from '../referrals/referrals.service';
 
 const COMMISSION_PCT = parseInt(
   process.env.PLATFORM_COMMISSION_PCT || '20',
@@ -20,6 +21,7 @@ export class PaymentsService {
     private prisma: PrismaService,
     private mail: MailService,
     private platformBank: PlatformBankService,
+    private referrals: ReferralsService,
   ) {}
 
   private snapshotBank(active: { bankName: string; accountNumber: string; accountHolder: string }[]) {
@@ -203,6 +205,12 @@ export class PaymentsService {
             create: { tutorId: payment.payeeTutorId, activeUntil },
           });
         }
+      }
+      // referral reward (only on SESSION CONFIRMED)
+      if (payment.kind === PaymentKind.SESSION) {
+        await this.referrals
+          .maybeCreateRewardOnFirstSession(payment.id, payment.payerId)
+          .catch((e) => console.error('referral reward error', e));
       }
       return tx.payment.findUnique({ where: { id: paymentId } });
     });

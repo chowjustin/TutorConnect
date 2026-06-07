@@ -61,8 +61,15 @@ export class AuthService {
   }
 
   async register(registerDto: RegisterDto) {
-    const { name, email, password, role, phoneNumber, whatsappNumber } =
-      registerDto;
+    const {
+      name,
+      email,
+      password,
+      role,
+      phoneNumber,
+      whatsappNumber,
+      referralCode,
+    } = registerDto;
 
     if (!name || !email || !password || !role || !phoneNumber) {
       throw new BadRequestException('All fields are required');
@@ -78,6 +85,18 @@ export class AuthService {
 
     const hashedPassword = await bcrypt.hash(password, 10);
 
+    // resolve referrer (referralCode → User.id)
+    let referredById: string | null = null;
+    if (referralCode) {
+      const ref = await this.prisma.user.findUnique({
+        where: { referralCode },
+        select: { id: true },
+      });
+      referredById = ref?.id ?? null;
+    }
+    // generate this user's own referralCode
+    const myReferralCode = randomBytes(4).toString('hex').toUpperCase();
+
     try {
       const { user, profileId } = await this.prisma.$transaction(async (tx) => {
         const createdUser = await tx.user.create({
@@ -87,6 +106,8 @@ export class AuthService {
             password: hashedPassword,
             role,
             phoneNumber,
+            referralCode: myReferralCode,
+            referredById,
           },
         });
 

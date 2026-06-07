@@ -22,6 +22,7 @@ import { PayoutsModule } from './payouts/payouts.module';
 import { SubscriptionModule } from './subscription/subscription.module';
 import { FeaturedModule } from './featured/featured.module';
 import { PromoModule } from './promo/promo.module';
+import { ReferralsModule } from './referrals/referrals.module';
 
 @Module({
   imports: [
@@ -46,6 +47,7 @@ import { PromoModule } from './promo/promo.module';
     SubscriptionModule,
     FeaturedModule,
     PromoModule,
+    ReferralsModule,
   ],
   controllers: [AppController],
   providers: [

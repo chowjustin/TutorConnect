@@ -406,7 +406,7 @@ model StudentCredit {
 
 ---
 
-### Commit 8 — [ ] `feat(be): referral program with reward credit`
+### Commit 8 — [x] `feat(be): referral program with reward credit`
 **Schema:**
 - `User.referralCode String @unique` (auto 8-char alphanumeric on register).
 - `User.referredById String?` (inviter userId).
