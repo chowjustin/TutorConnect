@@ -1,9 +1,6 @@
 import Link from 'next/link';
-import { Star } from 'lucide-react';
+import { ShieldCheck, Star } from 'lucide-react';
 
-import { Card, CardContent, CardHeader } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { formatRupiah } from '@/lib/format';
 
@@ -18,48 +15,68 @@ export function TutorCard({ tutor }: { tutor: TutorSearchItem }) {
     .toUpperCase();
 
   return (
-    <Card>
-      <CardHeader className='flex flex-row items-center gap-3 space-y-0'>
-        <Avatar>
-          <AvatarFallback>{initials}</AvatarFallback>
+    <Link
+      href={`/student/tutors/${tutor.id}`}
+      className='group border-primary-100 hover:border-primary-300 hover:shadow-primary-500/5 focus-visible:ring-primary-400 relative block overflow-hidden rounded-xl border bg-white p-5 transition-all hover:shadow-md focus-visible:ring-2 focus-visible:outline-none'
+    >
+      {tutor.featured ? (
+        <span className='bg-secondary-100 text-secondary-800 border-secondary-200 absolute top-3 right-3 rounded-full border px-2 py-0.5 text-[10px] font-medium tracking-wide uppercase'>
+          Featured
+        </span>
+      ) : null}
+
+      <div className='flex gap-4'>
+        <Avatar className='ring-primary-100 size-16 shrink-0 ring-2'>
+          <AvatarFallback className='from-primary-400 to-primary-600 bg-gradient-to-br font-bold text-white'>
+            {initials}
+          </AvatarFallback>
         </Avatar>
         <div className='min-w-0 flex-1'>
-          <div className='flex items-center gap-2'>
-            <h3 className='truncate font-semibold'>{tutor.user.name}</h3>
-            {tutor.featured ? (
-              <Badge className='bg-amber-100 text-amber-800'>Featured</Badge>
-            ) : null}
+          <div className='flex items-start gap-2'>
+            <h3 className='text-foreground truncate font-semibold'>
+              {tutor.user.name}
+            </h3>
+            <ShieldCheck
+              className='size-4 shrink-0 text-emerald-600'
+              aria-label='Terverifikasi'
+            />
           </div>
-          <div className='text-muted-foreground flex items-center gap-1 text-xs'>
-            <Star className='size-3 fill-amber-400 text-amber-400' />
-            <span>
-              {tutor.averageRating.toFixed(1)} ({tutor.reviewCount})
+          <p className='text-muted-foreground mt-0.5 line-clamp-1 text-sm'>
+            {tutor.bio ?? 'Belum ada bio.'}
+          </p>
+          <div className='mono text-muted-foreground mt-2 flex items-center gap-2 text-xs tabular-nums'>
+            <span className='inline-flex items-center gap-1'>
+              <Star className='size-3 fill-amber-400 text-amber-400' />
+              {tutor.averageRating.toFixed(1)}{' '}
+              <span className='text-muted-foreground/60'>
+                ({tutor.reviewCount})
+              </span>
+            </span>
+            <span aria-hidden>·</span>
+            <span className='text-foreground font-medium'>
+              {tutor.hourlyRate
+                ? `${formatRupiah(tutor.hourlyRate)}/jam`
+                : 'Tarif belum diatur'}
             </span>
           </div>
         </div>
-      </CardHeader>
-      <CardContent className='space-y-2 text-sm'>
-        <p className='text-muted-foreground line-clamp-2 min-h-[2.5rem]'>
-          {tutor.bio ?? 'Belum ada bio'}
-        </p>
-        <div className='flex flex-wrap gap-1'>
-          {tutor.subjects.slice(0, 3).map((s) => (
-            <Badge key={s} variant='secondary'>
-              {s}
-            </Badge>
-          ))}
-        </div>
-        <div className='flex items-center justify-between pt-2'>
-          <div className='text-sm font-semibold'>
-            {tutor.hourlyRate
-              ? `${formatRupiah(tutor.hourlyRate)}/jam`
-              : 'Tarif belum diatur'}
-          </div>
-          <Link href={`/student/tutors/${tutor.id}`}>
-            <Button size='sm'>Lihat</Button>
-          </Link>
-        </div>
-      </CardContent>
-    </Card>
+      </div>
+
+      <div className='mt-4 flex flex-wrap gap-1.5'>
+        {tutor.subjects.slice(0, 4).map((s) => (
+          <span
+            key={s}
+            className='bg-primary-50 text-primary-800 border-primary-100 rounded-full border px-2 py-0.5 text-xs'
+          >
+            {s}
+          </span>
+        ))}
+        {tutor.subjects.length > 4 ? (
+          <span className='text-muted-foreground self-center text-xs'>
+            +{tutor.subjects.length - 4}
+          </span>
+        ) : null}
+      </div>
+    </Link>
   );
 }

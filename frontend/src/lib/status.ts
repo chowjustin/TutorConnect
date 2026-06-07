@@ -66,6 +66,15 @@ const BLUE = {
     'bg-blue-50 text-blue-800 border border-blue-200 ring-1 ring-blue-100/60',
   dot: 'bg-blue-500',
 };
+/**
+ * Money-in-motion: pending payment review, payout in flight, "tersedia ditarik"
+ * balance. Reserved for the finance lifecycle states.
+ */
+const TEAL = {
+  className:
+    'bg-secondary-50 text-secondary-800 border border-secondary-200 ring-1 ring-secondary-100/60',
+  dot: 'bg-secondary-500',
+};
 
 export const APPLICATION_STATUS: Record<ApplicationStatus, StatusMeta> = {
   PENDING: { label: 'Menunggu', ...AMBER, icon: Clock },
@@ -81,14 +90,14 @@ export const SESSION_STATUS: Record<SessionStatus, StatusMeta> = {
 };
 
 export const PAYMENT_STATUS: Record<PaymentStatus, StatusMeta> = {
-  UNDER_REVIEW: { label: 'Diperiksa', ...SKY, icon: Eye },
+  UNDER_REVIEW: { label: 'Diperiksa', ...TEAL, icon: Eye },
   CONFIRMED: { label: 'Diterima', ...EMERALD, icon: CheckCircle2 },
   REJECTED: { label: 'Ditolak', ...RED, icon: XCircle },
   REFUNDED: { label: 'Dikembalikan', ...SLATE, icon: Undo2 },
 };
 
 export const PAYOUT_STATUS: Record<PayoutStatus, StatusMeta> = {
-  REQUESTED: { label: 'Diproses', ...VIOLET, icon: Send },
+  REQUESTED: { label: 'Diproses', ...TEAL, icon: Send },
   PAID: { label: 'Dibayar', ...EMERALD, icon: CheckCircle2 },
   REJECTED: { label: 'Ditolak', ...RED, icon: XCircle },
 };
