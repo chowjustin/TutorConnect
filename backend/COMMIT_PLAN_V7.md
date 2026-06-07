@@ -508,7 +508,7 @@ model SearchLog {
 
 ---
 
-### Commit 12 — [ ] `feat(be): session reminders cron, throttle and full e2e`
+### Commit 12 — [x] `feat(be): session reminders cron, throttle and full e2e`
 - `@nestjs/schedule`: hourly cron. SCHEDULED sessions starting in next 24h with `reminderSentAt = null` → mail tutor + each attendee, mark `reminderSentAt`.
 - `@Throttle({ limit: 5, ttl: 3600 })` on `POST /sessions`, `POST /payments/upload-proof`, `POST /tutor/payouts`.
 - e2e covering full flow:

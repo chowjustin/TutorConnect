@@ -1,5 +1,6 @@
 import { Module } from '@nestjs/common';
-import { APP_FILTER, APP_GUARD } from '@nestjs/core';
+import { APP_FILTER, APP_GUARD, APP_INTERCEPTOR } from '@nestjs/core';
+import { ScheduleModule } from '@nestjs/schedule';
 import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
@@ -25,12 +26,19 @@ import { PromoModule } from './promo/promo.module';
 import { ReferralsModule } from './referrals/referrals.module';
 import { DashboardsModule } from './dashboards/dashboards.module';
 import { TrackingModule } from './tracking/tracking.module';
+import { CronService } from './common/cron.service';
+import { ActivityInterceptor } from './common/activity.interceptor';
+import { SubscriptionModule as _Sub } from './subscription/subscription.module';
+import { FeaturedModule as _Feat } from './featured/featured.module';
+import { MailModule } from './mail/mail.module';
 
 @Module({
   imports: [
+    ScheduleModule.forRoot(),
     ThrottlerModule.forRoot([
       { name: 'default', ttl: 60_000, limit: 100 },
     ]),
+    MailModule,
     PrismaModule,
     UsersModule,
     AuthModule,
@@ -56,8 +64,10 @@ import { TrackingModule } from './tracking/tracking.module';
   controllers: [AppController],
   providers: [
     AppService,
+    CronService,
     { provide: APP_GUARD, useClass: ThrottlerGuard },
     { provide: APP_FILTER, useClass: PrismaExceptionFilter },
+    { provide: APP_INTERCEPTOR, useClass: ActivityInterceptor },
   ],
 })
 export class AppModule {}
