@@ -1,4 +1,5 @@
-import { IsNotEmpty, IsString } from 'class-validator';
+import { IsEmail, IsEnum, IsNotEmpty, IsOptional, IsString } from 'class-validator';
+import { UserRole } from '@prisma/client';
 
 export class JwtPayloadDto {
   @IsNotEmpty()
@@ -6,10 +7,13 @@ export class JwtPayloadDto {
   sub: string;
 
   @IsNotEmpty()
-  @IsString()
+  @IsEmail()
   email: string;
 
-  @IsNotEmpty()
+  @IsEnum(UserRole)
+  role: UserRole;
+
+  @IsOptional()
   @IsString()
-  role: string;
-} 
+  jti?: string;
+}

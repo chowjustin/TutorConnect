@@ -25,8 +25,8 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
   const errors = await validate(payloadDto);
   if (errors.length > 0) throw new UnauthorizedException('Invalid token payload');
 
-  const user = await this.prisma.user.findUnique({ 
-    where: { email: payloadDto.sub }, // or use userId if payload contains it
+  const user = await this.prisma.user.findUnique({
+    where: { id: payloadDto.sub },
   });
   if (!user) throw new UnauthorizedException('User not found');
 
