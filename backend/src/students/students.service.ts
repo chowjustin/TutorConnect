@@ -49,6 +49,7 @@ export class StudentsService {
         bio: dto.bio,
         school: dto.school,
         interests: dto.interests,
+        whatsappNumber: dto.whatsappNumber,
       },
       include: { user: true },
     });

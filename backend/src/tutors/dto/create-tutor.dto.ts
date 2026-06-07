@@ -1,6 +1,17 @@
-import { IsOptional, IsString, IsNumber, IsArray, IsObject, IsEnum } from 'class-validator';
+import {
+  IsOptional,
+  IsString,
+  IsNumber,
+  IsArray,
+  IsObject,
+  IsEnum,
+  IsUrl,
+  Matches,
+} from 'class-validator';
 import { Type } from 'class-transformer';
-import { Subject as Subjects } from '@prisma/client';
+import { Subject, EducationLevel, TeachingMethod } from '@prisma/client';
+
+const WA_REGEX = /^\+?[1-9]\d{7,14}$/;
 
 export class CreateTutorDto {
   @IsOptional()
@@ -12,10 +23,45 @@ export class CreateTutorDto {
   hourlyRate: number;
 
   @IsArray()
-  @IsEnum(Subjects, { each: true })
-  subjects: Subjects[];
+  @IsEnum(Subject, { each: true })
+  subjects: Subject[];
 
   @IsOptional()
   @IsObject()
-  availability: Record<string, string[]>;
+  availability?: Record<string, string[]>;
+
+  @IsOptional()
+  @IsString()
+  @Matches(WA_REGEX, { message: 'whatsappNumber must be E.164 format' })
+  whatsappNumber?: string;
+
+  @IsOptional()
+  @IsString()
+  educationBackground?: string;
+
+  @IsOptional()
+  @IsArray()
+  @IsEnum(EducationLevel, { each: true })
+  educationLevels?: EducationLevel[];
+
+  @IsOptional()
+  @IsArray()
+  @IsEnum(TeachingMethod, { each: true })
+  teachingMethods?: TeachingMethod[];
+
+  @IsOptional()
+  @IsUrl()
+  introVideoUrl?: string;
+
+  @IsOptional()
+  @IsString()
+  bankName?: string;
+
+  @IsOptional()
+  @IsString()
+  bankAccountNumber?: string;
+
+  @IsOptional()
+  @IsString()
+  bankAccountHolder?: string;
 }

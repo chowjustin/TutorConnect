@@ -16,7 +16,7 @@ export class ApplicationsService {
     private mailService: MailService,
   ) {}
 
-  async apply(studentEmail: string, tutorId: string) {
+  async apply(studentEmail: string, tutorId: string, message?: string) {
     const student = await this.prisma.user.findUnique({
       where: { email: studentEmail },
       include: { studentProfile: true },
@@ -58,6 +58,7 @@ export class ApplicationsService {
         data: {
           studentId: student.studentProfile.id,
           tutorId,
+          message: message ?? null,
         },
         include: {
           tutor: { include: { user: true } },

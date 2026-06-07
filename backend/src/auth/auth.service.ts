@@ -43,10 +43,19 @@ export class AuthService {
   }
 
   async register(registerDto: RegisterDto) {
-    const { name, email, password, role, phoneNumber } = registerDto;
+    const { name, email, password, role, phoneNumber, whatsappNumber } =
+      registerDto;
 
     if (!name || !email || !password || !role || !phoneNumber) {
       throw new BadRequestException('All fields are required');
+    }
+
+    if (role === UserRole.ADMIN) {
+      throw new BadRequestException('ADMIN cannot self-register');
+    }
+
+    if (role === UserRole.TUTOR && !whatsappNumber) {
+      throw new BadRequestException('whatsappNumber is required for tutors');
     }
 
     const hashedPassword = await bcrypt.hash(password, 10);
@@ -64,7 +73,7 @@ export class AuthService {
         });
 
         let pid: string;
-        if (role === 'TUTOR') {
+        if (role === UserRole.TUTOR) {
           const tutorProfile = await tx.tutorProfile.create({
             data: {
               userId: createdUser.id,
@@ -73,15 +82,17 @@ export class AuthService {
               experience: 0,
               availability: [],
               hourlyRate: 0,
+              whatsappNumber: whatsappNumber!,
             },
           });
           pid = tutorProfile.id;
-        } else if (role === 'STUDENT') {
+        } else if (role === UserRole.STUDENT) {
           const studentProfile = await tx.studentProfile.create({
             data: {
               userId: createdUser.id,
               bio: '',
               interests: [],
+              whatsappNumber: whatsappNumber ?? null,
             },
           });
           pid = studentProfile.id;
@@ -184,6 +195,41 @@ export class AuthService {
       };
     } catch {
       throw new UnauthorizedException('Invalid refresh token');
+    }
+  }
+
+  async createAdmin(input: {
+    name: string;
+    email: string;
+    password: string;
+    phoneNumber: string;
+  }) {
+    const { name, email, password, phoneNumber } = input;
+    if (!name || !email || !password || !phoneNumber) {
+      throw new BadRequestException('All fields are required');
+    }
+
+    const hashedPassword = await bcrypt.hash(password, 10);
+
+    try {
+      return await this.prisma.user.create({
+        data: {
+          name,
+          email,
+          password: hashedPassword,
+          phoneNumber,
+          role: UserRole.ADMIN,
+        },
+        select: { id: true, name: true, email: true, role: true },
+      });
+    } catch (error) {
+      if (
+        error instanceof Prisma.PrismaClientKnownRequestError &&
+        error.code === 'P2002'
+      ) {
+        throw new ConflictException('Email or phone number already exists');
+      }
+      throw new BadRequestException('Failed to create admin');
     }
   }
 

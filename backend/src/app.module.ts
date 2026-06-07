@@ -13,6 +13,7 @@ import { StudentsModule } from './students/students.module';
 import { ReviewsModule } from './reviews/reviews.module';
 import { ApplicationsModule } from './applications/applications.module';
 import { MaterialsModule } from './materials/materials.module';
+import { AdminModule } from './admin/admin.module';
 
 @Module({
   imports: [
@@ -28,6 +29,7 @@ import { MaterialsModule } from './materials/materials.module';
     ReviewsModule,
     ApplicationsModule,
     MaterialsModule,
+    AdminModule,
   ],
   controllers: [AppController],
   providers: [

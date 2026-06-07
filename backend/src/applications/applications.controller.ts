@@ -25,7 +25,7 @@ export class ApplicationsController {
   @Roles(UserRole.STUDENT)
   @Post()
   apply(@Request() req, @Body() dto: CreateApplicationDto) {
-    return this.apps.apply(req.user.email, dto.tutorId);
+    return this.apps.apply(req.user.email, dto.tutorId, dto.message);
   }
 
   @Roles(UserRole.STUDENT)

@@ -85,6 +85,14 @@ export class TutorsService {
         hourlyRate: dto.hourlyRate,
         availability: dto.availability,
         subjects: dto.subjects,
+        whatsappNumber: dto.whatsappNumber,
+        educationBackground: dto.educationBackground,
+        educationLevels: dto.educationLevels,
+        teachingMethods: dto.teachingMethods,
+        introVideoUrl: dto.introVideoUrl,
+        bankName: dto.bankName,
+        bankAccountNumber: dto.bankAccountNumber,
+        bankAccountHolder: dto.bankAccountHolder,
       },
     });
   }

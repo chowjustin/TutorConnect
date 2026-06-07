@@ -29,6 +29,26 @@ enum Subject {
   ACCOUNTING
 }
 
+enum EducationLevel {
+  JUNIOR_HIGH
+  SENIOR_HIGH
+  UNIVERSITY
+}
+
+enum TeachingMethod {
+  VISUAL
+  DISCUSSION
+  INTENSIVE
+  STRUCTURED
+}
+
+enum MaterialKind {
+  NOTE
+  VIDEO
+  EXERCISE
+  SUMMARY
+}
+
 
 model User {
   id             String          @id @default(cuid())
@@ -47,16 +67,24 @@ model User {
 }
 
 model TutorProfile {
-  id            String          @id @default(cuid())
-  userId        String          @unique
-  bio           String?
-  subjects      Subject[]            
-  experience    Int?
-  availability  Json?
-  hourlyRate    Float?
-  profileImage  String? 
-  createdAt     DateTime        @default(now())
-  updatedAt     DateTime        @updatedAt
+  id                 String           @id @default(cuid())
+  userId             String           @unique
+  bio                String?
+  subjects           Subject[]
+  experience         Int?
+  availability       Json?
+  hourlyRate         Float?
+  profileImage       String?
+  whatsappNumber     String           @default("")
+  educationBackground String?
+  educationLevels    EducationLevel[]
+  teachingMethods    TeachingMethod[]
+  introVideoUrl      String?
+  bankName           String?
+  bankAccountNumber  String?
+  bankAccountHolder  String?
+  createdAt          DateTime         @default(now())
+  updatedAt          DateTime         @updatedAt
 
   user          User            @relation("TutorUser", fields: [userId], references: [id], onDelete: Cascade)
   applications  Application[]   @relation("TutorApplications")
@@ -67,14 +95,15 @@ model TutorProfile {
 }
 
 model StudentProfile {
-  id            String          @id @default(cuid())
-  userId        String          @unique
-  bio           String?
-  interests     Subject[]        
-  school        String?         
-  profileImage  String?
-  createdAt     DateTime        @default(now())
-  updatedAt     DateTime        @updatedAt
+  id             String          @id @default(cuid())
+  userId         String          @unique
+  bio            String?
+  interests      Subject[]
+  school         String?
+  profileImage   String?
+  whatsappNumber String?
+  createdAt      DateTime        @default(now())
+  updatedAt      DateTime        @updatedAt
 
   user          User            @relation("StudentUser", fields: [userId], references: [id], onDelete: Cascade)
   uploads       FileUpload[]
@@ -92,6 +121,7 @@ model Application {
   studentId     String
   tutorId       String
   status        ApplicationStatus @default(PENDING)
+  message       String?
   requestedAt   DateTime        @default(now())
   scheduledAt   DateTime?
   createdAt     DateTime @default(now())
@@ -135,12 +165,16 @@ model FileUpload {
 }
 
 model Material {
-  id        String   @id @default(cuid())
-  title     String
-  fileUrl   String
-  tutorId   String
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  id          String         @id @default(cuid())
+  title       String
+  fileUrl     String
+  tutorId     String
+  subject     Subject        @default(MATH)
+  level       EducationLevel @default(SENIOR_HIGH)
+  kind        MaterialKind   @default(NOTE)
+  description String?
+  createdAt   DateTime       @default(now())
+  updatedAt   DateTime       @updatedAt
 
   tutor           TutorProfile     @relation(fields: [tutorId], references: [id], onDelete: Cascade)
   allowedStudents MaterialAccess[] @relation("MaterialToAccess")
@@ -157,7 +191,3 @@ model MaterialAccess {
 
   @@unique([materialId, studentId])
 }
-
-
-
-
