@@ -111,13 +111,19 @@ export class TutorsController {
     return this.tutorsService.getProfile(req.user.email);
   }
 
+  @Get('by-id/:id')
+  getById(@Param('id') id: string) {
+    return this.tutorsService.getById(id);
+  }
+
   @Roles(UserRole.TUTOR)
   @Patch(':id')
   async update(
     @Param('id') id: string,
     @Body() updateTutorDto: UpdateTutorDto,
+    @Request() req,
   ) {
-    return this.tutorsService.update(id, updateTutorDto);
+    return this.tutorsService.update(id, updateTutorDto, req.user.sub);
   }
 
   @Get(':email/students')

@@ -7,7 +7,7 @@ import {
 } from 'class-validator';
 import { Subject } from '@prisma/client';
 
-const WA_REGEX = /^\+?[1-9]\d{7,14}$/;
+const WA_REGEX = /^[0-9+\-\s]{8,20}$/;
 
 export class CreateStudentDto {
   @IsOptional()

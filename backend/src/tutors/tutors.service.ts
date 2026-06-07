@@ -400,6 +400,32 @@ export class TutorsService {
     };
   }
 
+  async getById(tutorProfileId: string) {
+    const profile = await this.prisma.tutorProfile.findUnique({
+      where: { id: tutorProfileId },
+      include: {
+        user: {
+          select: { id: true, name: true, email: true, phoneNumber: true },
+        },
+      },
+    });
+    if (!profile) throw new NotFoundException('Tutor not found');
+    return {
+      id: profile.id,
+      bio: profile.bio,
+      hourlyRate: profile.hourlyRate,
+      subjects: profile.subjects,
+      educationLevels: profile.educationLevels,
+      teachingMethods: profile.teachingMethods,
+      educationBackground: profile.educationBackground,
+      experience: profile.experience,
+      introVideoUrl: profile.introVideoUrl,
+      verificationStatus: profile.verificationStatus,
+      publishedAt: profile.publishedAt,
+      user: profile.user,
+    };
+  }
+
   async getProfile(email: string) {
     const tutor = await this.prisma.user.findUnique({
       where: { email },
@@ -426,9 +452,12 @@ export class TutorsService {
     };
   }
 
-  async update(id: string, dto: UpdateTutorDto) {
+  async update(id: string, dto: UpdateTutorDto, callerUserId?: string) {
     const exists = await this.prisma.tutorProfile.findUnique({ where: { id } });
     if (!exists) throw new NotFoundException('Tutor profile not found');
+    if (callerUserId && exists.userId !== callerUserId) {
+      throw new ForbiddenException('Not your tutor profile');
+    }
 
     return this.prisma.tutorProfile.update({
       where: { id },

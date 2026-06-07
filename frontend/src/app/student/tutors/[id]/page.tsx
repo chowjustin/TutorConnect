@@ -39,7 +39,7 @@ export default function StudentTutorDetailPage() {
   const [open, setOpen] = React.useState(false);
 
   const tutorQ = useQuery<TutorDetail>({
-    queryKey: [`/tutors/${tutorId}`],
+    queryKey: [`/tutors/by-id/${tutorId}`],
     enabled: !!tutorId,
   });
 

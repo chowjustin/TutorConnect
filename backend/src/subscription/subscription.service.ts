@@ -14,12 +14,23 @@ export class SubscriptionService {
     return sub;
   }
 
-  /** Returns refId (the tier string) to use with POST /payments/upload-proof */
+  /** Returns refId, kind and amount for the FE checkout flow. */
   prepareRequest(tier: PlanTier) {
     if (tier === PlanTier.FREE) {
       throw new NotFoundException('Cannot purchase FREE');
     }
-    return { kind: 'SUBSCRIPTION', refId: tier };
+    const PRICES: Record<Exclude<PlanTier, 'FREE'>, number> = {
+      PREMIUM_STUDENT: parseInt(
+        process.env.PRICE_PREMIUM_STUDENT || '50000',
+        10,
+      ),
+      PRO_TUTOR: parseInt(process.env.PRICE_PRO_TUTOR || '100000', 10),
+    };
+    return {
+      kind: 'SUBSCRIPTION' as const,
+      refId: tier as string,
+      amount: PRICES[tier as Exclude<PlanTier, 'FREE'>],
+    };
   }
 
   async expireOldCron() {

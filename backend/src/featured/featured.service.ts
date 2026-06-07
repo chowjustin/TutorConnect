@@ -11,8 +11,12 @@ export class FeaturedService {
       include: { tutorProfile: true },
     });
     if (!user?.tutorProfile) throw new NotFoundException('Tutor not found');
-    // tutorId is stored as payeeTutorId via subsequent payment row
-    return { kind: 'FEATURED_LISTING', refId: String(days) };
+    const perDay = parseInt(process.env.FEATURED_PRICE_PER_DAY || '5000', 10);
+    return {
+      kind: 'FEATURED_LISTING' as const,
+      refId: String(days),
+      amount: perDay * days,
+    };
   }
 
   async expireOldCron() {

@@ -11,7 +11,8 @@ import {
 import { Type } from 'class-transformer';
 import { Subject, EducationLevel, TeachingMethod } from '@prisma/client';
 
-const WA_REGEX = /^\+?[1-9]\d{7,14}$/;
+// Accepts +62..., 62..., 08... Indonesian formats with optional separators.
+const WA_REGEX = /^[0-9+\-\s]{8,20}$/;
 
 export class CreateTutorDto {
   @IsOptional()

@@ -1,4 +1,8 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import {
+  ForbiddenException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { UpdateStudentDto } from './dto/update-student.dto';
 
@@ -35,12 +39,15 @@ export class StudentsService {
     };
   }
 
-  async update(id: string, dto: UpdateStudentDto) {
+  async update(id: string, dto: UpdateStudentDto, callerUserId?: string) {
     const exists = await this.prisma.studentProfile.findUnique({
       where: { id },
     });
     if (!exists) {
       throw new NotFoundException('Student profile not found');
+    }
+    if (callerUserId && exists.userId !== callerUserId) {
+      throw new ForbiddenException('Not your student profile');
     }
 
     return this.prisma.studentProfile.update({

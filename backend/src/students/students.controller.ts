@@ -22,7 +22,11 @@ export class StudentsController {
   }
 
   @Patch(':id')
-  updateProfile(@Param('id') id: string, @Body() dto: UpdateStudentDto) {
-    return this.studentsService.update(id, dto);
+  updateProfile(
+    @Param('id') id: string,
+    @Body() dto: UpdateStudentDto,
+    @Request() req,
+  ) {
+    return this.studentsService.update(id, dto, req.user.sub);
   }
 }
