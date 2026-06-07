@@ -58,5 +58,6 @@ graphify-out
 uploads
 prisma/migrations
 
-# Local commit plans (not for upstream)
+# Local planning docs (not for upstream)
 COMMIT_PLAN*.md
+IMPROVEMENT_PLAN.md
