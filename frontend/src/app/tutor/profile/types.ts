@@ -44,9 +44,13 @@ export interface TutorProfileForm {
   whatsappNumber: string;
   educationBackground: string;
   experience: string;
+  introVideoUrl: string;
   bankName: string;
   bankAccountNumber: string;
   bankAccountHolder: string;
+  subjects: Subject[];
+  educationLevels: EducationLevel[];
+  teachingMethods: TeachingMethod[];
 }
 
 export interface UpdateTutorRequest {
@@ -54,9 +58,13 @@ export interface UpdateTutorRequest {
   hourlyRate?: number;
   whatsappNumber?: string;
   educationBackground?: string;
+  introVideoUrl?: string;
   bankName?: string;
   bankAccountNumber?: string;
   bankAccountHolder?: string;
+  subjects?: Subject[];
+  educationLevels?: EducationLevel[];
+  teachingMethods?: TeachingMethod[];
 }
 
 export interface CompletenessResponse {

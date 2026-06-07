@@ -30,6 +30,7 @@ export const SIDEBAR_ENTRIES: Record<Role, SidebarEntry[]> = {
   TUTOR: [
     { label: 'Dashboard', href: '/tutor', icon: LayoutDashboard },
     { label: 'Profil', href: '/tutor/profile', icon: User },
+    { label: 'Verifikasi', href: '/tutor/verification', icon: ShieldCheck },
     { label: 'Ketersediaan', href: '/tutor/availability', icon: CalendarDays },
     { label: 'Aplikasi', href: '/tutor/applications', icon: ListChecks },
     { label: 'Sesi', href: '/tutor/sessions', icon: CalendarDays },

@@ -25,27 +25,25 @@ export type Subject =
   | 'MATH'
   | 'PHYSICS'
   | 'CHEMISTRY'
-  | 'BIOLOGY'
   | 'ENGLISH'
-  | 'INDONESIAN'
-  | 'HISTORY'
-  | 'GEOGRAPHY'
-  | 'ECONOMICS'
   | 'COMPUTER_SCIENCE'
-  | 'ART'
-  | 'MUSIC';
+  | 'ECONOMICS'
+  | 'ACCOUNTING';
 
-export type EducationLevel =
-  | 'KINDERGARTEN'
-  | 'ELEMENTARY'
-  | 'JUNIOR_HIGH'
-  | 'SENIOR_HIGH'
-  | 'UNIVERSITY'
-  | 'ADULT';
+export type EducationLevel = 'JUNIOR_HIGH' | 'SENIOR_HIGH' | 'UNIVERSITY';
 
-export type TeachingMethod = 'ONLINE' | 'OFFLINE' | 'HYBRID';
+export type TeachingMethod =
+  | 'VISUAL'
+  | 'DISCUSSION'
+  | 'INTENSIVE'
+  | 'STRUCTURED';
 
-export type MaterialKind = 'PDF' | 'IMAGE' | 'VIDEO' | 'LINK' | 'OTHER';
+export type MaterialKind =
+  | 'NOTES'
+  | 'EXERCISES'
+  | 'EXAM'
+  | 'REFERENCE'
+  | 'OTHER';
 
 export type VerificationStatus = 'PENDING' | 'VERIFIED' | 'REJECTED';
 
