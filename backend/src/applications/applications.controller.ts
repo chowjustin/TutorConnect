@@ -1,49 +1,52 @@
 import {
-  Controller,
-  Post,
-  Patch,
-  Get,
-  Delete,
-  Param,
   Body,
+  Controller,
+  Delete,
+  Get,
+  Param,
+  Patch,
+  Post,
   Request,
   UseGuards,
 } from '@nestjs/common';
+import { UserRole } from '@prisma/client';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
+import { RolesGuard } from '../auth/roles.guard';
+import { Roles } from '../auth/roles.decorator';
 import { ApplicationsService } from './applications.service';
 import { CreateApplicationDto } from './dto/create-application.dto';
 import { UpdateApplicationStatusDto } from './dto/update-application.dto';
 
-@UseGuards(JwtAuthGuard)
+@UseGuards(JwtAuthGuard, RolesGuard)
 @Controller('applications')
 export class ApplicationsController {
   constructor(private readonly apps: ApplicationsService) {}
 
-  // student applies
+  @Roles(UserRole.STUDENT)
   @Post()
   apply(@Request() req, @Body() dto: CreateApplicationDto) {
     return this.apps.apply(req.user.email, dto.tutorId);
   }
 
-  // student cancels
+  @Roles(UserRole.STUDENT)
   @Delete(':id')
   cancel(@Request() req, @Param('id') id: string) {
     return this.apps.cancel(req.user.email, id);
   }
 
-  // student views own apps
+  @Roles(UserRole.STUDENT)
   @Get('student')
   listForStudent(@Request() req) {
     return this.apps.listForStudent(req.user.email);
   }
 
-  // tutor sees apps sent to them
+  @Roles(UserRole.TUTOR)
   @Get('tutor')
   listForTutor(@Request() req) {
     return this.apps.listForTutor(req.user.email);
   }
 
-  // tutor updates status
+  @Roles(UserRole.TUTOR)
   @Patch(':id/status')
   updateStatus(
     @Request() req,

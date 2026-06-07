@@ -1,17 +1,21 @@
 import {
+  BadRequestException,
+  ConflictException,
+  ForbiddenException,
   Injectable,
   NotFoundException,
-  ForbiddenException,
-  BadRequestException,
 } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
-import { ApplicationStatus } from '@prisma/client';
+import { ApplicationStatus, Prisma } from '@prisma/client';
 import { MailService } from '../mail/mail.service';
 
 @Injectable()
 export class ApplicationsService {
-  constructor(private prisma: PrismaService, private mailService: MailService,) {}
-  // student applies to tutor
+  constructor(
+    private prisma: PrismaService,
+    private mailService: MailService,
+  ) {}
+
   async apply(studentEmail: string, tutorId: string) {
     const student = await this.prisma.user.findUnique({
       where: { email: studentEmail },
@@ -24,7 +28,7 @@ export class ApplicationsService {
 
     const tutor = await this.prisma.tutorProfile.findUnique({
       where: { id: tutorId },
-      include: { user: true }, // added so we can access tutor.user.email & name
+      include: { user: true },
     });
 
     if (!tutor) {
@@ -35,39 +39,52 @@ export class ApplicationsService {
       where: {
         studentId: student.studentProfile.id,
         tutorId,
-        status: ApplicationStatus.PENDING,
+        status: {
+          in: [ApplicationStatus.PENDING, ApplicationStatus.ACCEPTED],
+        },
       },
     });
 
     if (existing) {
-      throw new BadRequestException('You already applied and it is still pending');
+      throw new BadRequestException(
+        existing.status === ApplicationStatus.ACCEPTED
+          ? 'You already have an accepted lesson with this tutor'
+          : 'You already applied and it is still pending',
+      );
     }
 
-    const newApp = await this.prisma.application.create({
-      data: {
-        studentId: student.studentProfile.id,
-        tutorId,
-      },
-      include: {
-        tutor: { include: { user: true } },
-      },
-    });
+    try {
+      const newApp = await this.prisma.application.create({
+        data: {
+          studentId: student.studentProfile.id,
+          tutorId,
+        },
+        include: {
+          tutor: { include: { user: true } },
+        },
+      });
 
-    await this.mailService.sendStudentPendingEmail(
-      student.email,
-      tutor.user.name,
-    );
+      await this.mailService.sendStudentPendingEmail(
+        student.email,
+        tutor.user.name,
+      );
+      await this.mailService.sendTutorNewApplicationEmail(
+        tutor.user.email,
+        student.name,
+      );
 
-    await this.mailService.sendTutorNewApplicationEmail(
-      tutor.user.email,
-      student.name,
-    );
-
-    return newApp;
+      return newApp;
+    } catch (error) {
+      if (
+        error instanceof Prisma.PrismaClientKnownRequestError &&
+        error.code === 'P2002'
+      ) {
+        throw new ConflictException('You already applied to this tutor');
+      }
+      throw error;
+    }
   }
 
-
-  // student cancels only if still pending
   async cancel(studentEmail: string, applicationId: string) {
     const app = await this.prisma.application.findUnique({
       where: { id: applicationId },
@@ -89,58 +106,44 @@ export class ApplicationsService {
     return this.prisma.application.delete({ where: { id: applicationId } });
   }
 
-  // student sees their own applications
   async listForStudent(studentEmail: string) {
     return this.prisma.application.findMany({
       where: {
-        student: {
-          user: { email: studentEmail },
-        },
+        student: { user: { email: studentEmail } },
       },
       include: { tutor: { include: { user: true } } },
       orderBy: { createdAt: 'desc' },
     });
   }
 
-  // tutor sees all applications sent to them
   async listForTutor(tutorEmail: string) {
-  // Step 1: Get the User by email
-  const user = await this.prisma.user.findUnique({
-    where: { email: tutorEmail },
-  });
+    const user = await this.prisma.user.findUnique({
+      where: { email: tutorEmail },
+      include: { tutorProfile: true },
+    });
 
-  if (!user) return [];
+    if (!user?.tutorProfile) {
+      throw new NotFoundException('Tutor profile not found');
+    }
 
-  // Step 2: Get tutor profile with that user ID
-  const tutor = await this.prisma.tutorProfile.findUnique({
-    where: { userId: user.id },
-  });
-
-  if (!tutor) return [];
-
-  // Step 3: Get ALL applications for that tutor — NO status filter
-  return this.prisma.application.findMany({
-    where: {
-      tutorId: tutor.id,
-    },
-    include: {
-      student: {
-        include: {
-          user: true,
-        },
+    return this.prisma.application.findMany({
+      where: { tutorId: user.tutorProfile.id },
+      include: {
+        student: { include: { user: true } },
       },
-    },
-    orderBy: { createdAt: "desc" },
-  });
-}
+      orderBy: { createdAt: 'desc' },
+    });
+  }
 
-
-  // tutor updates status (accept or reject)
-  async updateStatus(tutorEmail: string, id: string, status: ApplicationStatus) {
+  async updateStatus(
+    tutorEmail: string,
+    id: string,
+    status: ApplicationStatus,
+  ) {
     const app = await this.prisma.application.findUnique({
       where: { id },
       include: {
-        tutor: { include: { user: true, students: true } }, // include students
+        tutor: { include: { user: true } },
         student: { include: { user: true } },
       },
     });
@@ -150,30 +153,34 @@ export class ApplicationsService {
     }
 
     if (app.tutor.user.email !== tutorEmail) {
-      throw new ForbiddenException('You can only update applications sent to you');
+      throw new ForbiddenException(
+        'You can only update applications sent to you',
+      );
     }
 
     if (app.status !== ApplicationStatus.PENDING) {
-      throw new BadRequestException('Only pending applications can be updated');
+      throw new BadRequestException(
+        'Only pending applications can be updated',
+      );
     }
 
-    // Update the application status
-    const updated = await this.prisma.application.update({
-      where: { id },
-      data: { status },
-    });
-
-    // If accepted, add the student to the tutor's students relation
-    if (status === ApplicationStatus.ACCEPTED) {
-      await this.prisma.tutorProfile.update({
-        where: { id: app.tutor.id },
-        data: {
-          students: {
-            connect: { id: app.student.id },
-          },
-        },
+    const updated = await this.prisma.$transaction(async (tx) => {
+      const u = await tx.application.update({
+        where: { id },
+        data: { status },
       });
-    }
+
+      if (status === ApplicationStatus.ACCEPTED) {
+        await tx.tutorProfile.update({
+          where: { id: app.tutor.id },
+          data: {
+            students: { connect: { id: app.student.id } },
+          },
+        });
+      }
+
+      return u;
+    });
 
     await this.mailService.sendStudentStatusUpdateEmail(
       app.student.user.email,
@@ -183,6 +190,4 @@ export class ApplicationsService {
 
     return updated;
   }
-
-
 }
