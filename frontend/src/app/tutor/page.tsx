@@ -1,10 +1,16 @@
 'use client';
 
 import { useQuery } from '@tanstack/react-query';
-import { CalendarDays, ListChecks, Wallet } from 'lucide-react';
+import {
+  CalendarDays,
+  LayoutDashboard,
+  ListChecks,
+  TrendingUp,
+  Wallet,
+} from 'lucide-react';
 
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Skeleton } from '@/components/ui/skeleton';
+import { PageHeader } from '@/components/ui/page-header';
+import { KpiCard } from '@/components/ui/kpi-card';
 import { formatRupiah } from '@/lib/format';
 
 interface TutorDashboard {
@@ -21,52 +27,42 @@ export default function TutorDashboardPage() {
   });
 
   return (
-    <div className='space-y-4'>
-      <h1 className='h2'>Dashboard Tutor</h1>
+    <div className='space-y-6'>
+      <PageHeader
+        icon={LayoutDashboard}
+        title='Dashboard Tutor'
+        description='Ringkasan penghasilan, aplikasi dan jadwal Anda.'
+      />
       <div className='grid gap-4 sm:grid-cols-2 lg:grid-cols-4'>
-        <StatCard
-          icon={<Wallet className='size-5' />}
-          label='Penghasilan Bulan Ini'
-          value={isLoading ? '—' : formatRupiah(data?.earningsThisMonth ?? 0)}
+        <KpiCard
+          icon={Wallet}
+          accent='primary'
+          label='Bulan Ini'
+          value={formatRupiah(data?.earningsThisMonth ?? 0)}
+          loading={isLoading}
         />
-        <StatCard
-          icon={<Wallet className='size-5' />}
+        <KpiCard
+          icon={TrendingUp}
+          accent='emerald'
           label='Total Penghasilan'
-          value={isLoading ? '—' : formatRupiah(data?.totalEarnings ?? 0)}
+          value={formatRupiah(data?.totalEarnings ?? 0)}
+          loading={isLoading}
         />
-        <StatCard
-          icon={<ListChecks className='size-5' />}
+        <KpiCard
+          icon={ListChecks}
+          accent='amber'
           label='Aplikasi Pending'
-          value={isLoading ? '—' : String(data?.pendingApplications ?? 0)}
+          value={String(data?.pendingApplications ?? 0)}
+          loading={isLoading}
         />
-        <StatCard
-          icon={<CalendarDays className='size-5' />}
+        <KpiCard
+          icon={CalendarDays}
+          accent='sky'
           label='Sesi Mendatang'
-          value={isLoading ? '—' : String(data?.upcomingSessions ?? 0)}
+          value={String(data?.upcomingSessions ?? 0)}
+          loading={isLoading}
         />
       </div>
     </div>
-  );
-}
-
-function StatCard({
-  icon,
-  label,
-  value,
-}: {
-  icon: React.ReactNode;
-  label: string;
-  value: string;
-}) {
-  return (
-    <Card>
-      <CardHeader className='flex flex-row items-center gap-2 space-y-0 pb-2'>
-        <span className='text-primary'>{icon}</span>
-        <CardTitle className='text-sm font-medium'>{label}</CardTitle>
-      </CardHeader>
-      <CardContent>
-        <div className='h3'>{value}</div>
-      </CardContent>
-    </Card>
   );
 }

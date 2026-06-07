@@ -90,22 +90,22 @@
 
   /* #region =========== Typography =========== */
   .h0 {
-    @apply font-primary text-3xl font-bold md:text-5xl;
+    @apply font-primary text-3xl font-bold md:text-5xl tracking-tight text-primary-900;
   }
 
   h1,
   .h1 {
-    @apply font-primary text-2xl font-bold md:text-4xl;
+    @apply font-primary text-2xl font-bold md:text-4xl tracking-tight text-primary-900;
   }
 
   h2,
   .h2 {
-    @apply font-primary text-xl font-bold md:text-3xl;
+    @apply font-primary text-xl font-bold md:text-3xl tracking-tight text-primary-900;
   }
 
   h3,
   .h3 {
-    @apply font-primary text-lg font-bold md:text-2xl;
+    @apply font-primary text-lg font-bold md:text-2xl tracking-tight text-primary-900;
   }
 
   h4,
@@ -115,7 +115,20 @@
 
   body,
   .p {
-    @apply font-primary text-sm md:text-base;
+    @apply font-primary text-base md:text-lg leading-relaxed;
+  }
+
+  /* Tabular numbers + mono for stats, money, IDs */
+  .mono {
+    font-family:
+      var(--font-mono), ui-monospace, SFMono-Regular, Menlo, Monaco,
+      Consolas, monospace;
+    font-feature-settings: 'tnum' 1, 'zero' 1;
+  }
+
+  /* Glass surface utility — frosted card */
+  .glass {
+    @apply backdrop-blur-xl bg-white/75 border border-white/60 shadow-xl shadow-primary-500/5;
   }
   /* #endregion =========== Typography =========== */
 

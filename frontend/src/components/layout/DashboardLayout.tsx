@@ -90,6 +90,11 @@ export function DashboardLayout({ role, user, children }: DashboardLayoutProps) 
                         asChild
                         isActive={active}
                         tooltip={entry.label}
+                        className={
+                          active
+                            ? 'bg-primary-100 text-primary-700 font-semibold hover:bg-primary-100 hover:text-primary-700 data-[active=true]:bg-primary-100 data-[active=true]:text-primary-700'
+                            : 'hover:bg-primary-50 hover:text-primary-700'
+                        }
                       >
                         <Link href={entry.href}>
                           <entry.icon className='size-4 shrink-0' />
@@ -116,19 +121,17 @@ export function DashboardLayout({ role, user, children }: DashboardLayoutProps) 
         <SidebarRail />
       </Sidebar>
       <SidebarInset>
-        <header className='bg-background sticky top-0 z-10 flex h-14 items-center gap-3 border-b px-4'>
+        <header className='sticky top-0 z-10 flex h-14 items-center gap-3 border-b border-primary-100/60 bg-white/70 px-4 backdrop-blur-xl'>
           <SidebarTrigger />
           <Separator orientation='vertical' className='h-6' />
           <div className='flex-1' />
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button
-                variant='ghost'
-                size='sm'
-                className='gap-2 px-2'
-              >
-                <Avatar className='size-7'>
-                  <AvatarFallback className='text-xs'>{initials}</AvatarFallback>
+              <Button variant='ghost' size='sm' className='gap-2 px-2'>
+                <Avatar className='size-8 ring-2 ring-primary-100'>
+                  <AvatarFallback className='bg-gradient-to-br from-primary-400 to-primary-600 text-xs font-bold text-white'>
+                    {initials}
+                  </AvatarFallback>
                 </Avatar>
                 <span className='hidden text-sm font-medium sm:inline'>
                   {user.name}
@@ -150,7 +153,7 @@ export function DashboardLayout({ role, user, children }: DashboardLayoutProps) 
             </DropdownMenuContent>
           </DropdownMenu>
         </header>
-        <main className='dashboard-layout py-6'>{children}</main>
+        <main className='dashboard-layout py-8'>{children}</main>
       </SidebarInset>
     </SidebarProvider>
   );

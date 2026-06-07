@@ -1,9 +1,10 @@
 'use client';
 
 import { useQuery } from '@tanstack/react-query';
-import { CreditCard, PiggyBank, UserCheck } from 'lucide-react';
+import { CreditCard, LayoutDashboard, PiggyBank, UserCheck } from 'lucide-react';
 
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { PageHeader } from '@/components/ui/page-header';
+import { KpiCard } from '@/components/ui/kpi-card';
 
 interface AdminOverview {
   pendingVerifications: number;
@@ -17,42 +18,34 @@ export default function AdminDashboardPage() {
   });
 
   return (
-    <div className='space-y-4'>
-      <h1 className='h2'>Dashboard Admin</h1>
+    <div className='space-y-6'>
+      <PageHeader
+        icon={LayoutDashboard}
+        title='Dashboard Admin'
+        description='Antrian verifikasi, pembayaran dan pencairan.'
+      />
       <div className='grid gap-4 sm:grid-cols-3'>
-        <Card>
-          <CardHeader className='flex flex-row items-center gap-2 pb-2 space-y-0'>
-            <UserCheck className='text-primary size-5' />
-            <CardTitle className='text-sm'>Verifikasi Pending</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className='h3'>
-              {isLoading ? '—' : (data?.pendingVerifications ?? 0)}
-            </div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className='flex flex-row items-center gap-2 pb-2 space-y-0'>
-            <CreditCard className='text-primary size-5' />
-            <CardTitle className='text-sm'>Pembayaran Diperiksa</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className='h3'>
-              {isLoading ? '—' : (data?.underReviewPayments ?? 0)}
-            </div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className='flex flex-row items-center gap-2 pb-2 space-y-0'>
-            <PiggyBank className='text-primary size-5' />
-            <CardTitle className='text-sm'>Pencairan Diajukan</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className='h3'>
-              {isLoading ? '—' : (data?.requestedPayouts ?? 0)}
-            </div>
-          </CardContent>
-        </Card>
+        <KpiCard
+          icon={UserCheck}
+          accent='primary'
+          label='Verifikasi Pending'
+          value={String(data?.pendingVerifications ?? 0)}
+          loading={isLoading}
+        />
+        <KpiCard
+          icon={CreditCard}
+          accent='sky'
+          label='Pembayaran Diperiksa'
+          value={String(data?.underReviewPayments ?? 0)}
+          loading={isLoading}
+        />
+        <KpiCard
+          icon={PiggyBank}
+          accent='amber'
+          label='Pencairan Diajukan'
+          value={String(data?.requestedPayouts ?? 0)}
+          loading={isLoading}
+        />
       </div>
     </div>
   );
