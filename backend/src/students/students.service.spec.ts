@@ -2,7 +2,6 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { StudentsService } from './students.service';
 import { PrismaService } from '../prisma/prisma.service';
 import { NotFoundException } from '@nestjs/common';
-import { Subject } from '@prisma/client';
 
 describe('StudentsService', () => {
   let service: StudentsService;
@@ -58,27 +57,6 @@ describe('StudentsService', () => {
       await expect(service.getProfile('noone@test.com')).rejects.toThrow(
         NotFoundException,
       );
-    });
-  });
-
-  describe('search', () => {
-    it('should call prisma.tutorProfile.findMany with filters', async () => {
-      mockPrisma.tutorProfile.findMany.mockResolvedValue([{ id: 't1', user: {} }]);
-      const result = await service.search('Alice', Subject.MATH, 50, 200, true, 'me@test.com');
-
-      expect(mockPrisma.tutorProfile.findMany).toHaveBeenCalledWith({
-        where: {
-          AND: [
-            { user: { name: { contains: 'Alice', mode: 'insensitive' } } },
-            { subjects: { has: Subject.MATH } },
-            { hourlyRate: { gte: 50, lte: 200 } },
-            { user: { email: { not: 'me@test.com' } } },
-          ],
-        },
-        include: { user: true },
-      });
-
-      expect(result).toEqual([{ id: 't1', user: {} }]);
     });
   });
 

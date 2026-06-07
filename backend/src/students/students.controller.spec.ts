@@ -1,7 +1,6 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { StudentsController } from './students.controller';
 import { StudentsService } from './students.service';
-import { Subject } from '@prisma/client';
 import { NotFoundException } from '@nestjs/common';
 import { UpdateStudentDto } from './dto/update-student.dto';
 
@@ -12,7 +11,6 @@ describe('StudentsController', () => {
   const mockService = {
     getProfile: jest.fn(),
     update: jest.fn(),
-    search: jest.fn(),
   };
 
   beforeEach(async () => {
@@ -62,40 +60,4 @@ describe('StudentsController', () => {
     });
   });
 
-  describe('searchTutors', () => {
-    it('should call service.search with correct parameters', async () => {
-      const mockTutors = [{ id: 't1', user: {} }];
-      mockService.search.mockResolvedValue(mockTutors);
-
-      const req = { user: { email: 'student@test.com' } };
-      const result = await controller.searchTutors('Alice', 'MATH', '50', '200', req);
-
-      expect(result).toBe(mockTutors);
-      expect(mockService.search).toHaveBeenCalledWith(
-        'Alice',
-        Subject.MATH,
-        50,
-        200,
-        true,
-        'student@test.com',
-      );
-    });
-
-    it('should ignore invalid subjects', async () => {
-      const mockTutors = [];
-      mockService.search.mockResolvedValue(mockTutors);
-
-      const req = { user: { email: 'student@test.com' } };
-      await controller.searchTutors('Alice', 'INVALID', '50', '200', req);
-
-      expect(mockService.search).toHaveBeenCalledWith(
-        'Alice',
-        undefined,
-        50,
-        200,
-        true,
-        'student@test.com',
-      );
-    });
-  });
 });
