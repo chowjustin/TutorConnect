@@ -279,7 +279,7 @@ model IdempotencyKey {
 
 ---
 
-### Commit 6 — [ ] `feat(be): tutor wallet, ledger and payouts`
+### Commit 6 — [x] `feat(be): tutor wallet, ledger and payouts`
 **Schema:**
 ```prisma
 enum PayoutStatus { REQUESTED PAID REJECTED }

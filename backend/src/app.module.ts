@@ -18,6 +18,7 @@ import { AvailabilityModule } from './availability/availability.module';
 import { SessionsModule } from './sessions/sessions.module';
 import { PlatformBankModule } from './platform-bank/platform-bank.module';
 import { PaymentsModule } from './payments/payments.module';
+import { PayoutsModule } from './payouts/payouts.module';
 
 @Module({
   imports: [
@@ -38,6 +39,7 @@ import { PaymentsModule } from './payments/payments.module';
     SessionsModule,
     PlatformBankModule,
     PaymentsModule,
+    PayoutsModule,
   ],
   controllers: [AppController],
   providers: [
