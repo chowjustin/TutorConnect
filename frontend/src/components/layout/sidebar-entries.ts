@@ -47,6 +47,7 @@ export const SIDEBAR_ENTRIES: Record<Role, SidebarEntry[]> = {
     { label: 'Profil', href: '/student/profile', icon: User },
     { label: 'Cari Tutor', href: '/student/tutors', icon: Search },
     { label: 'Aplikasi', href: '/student/applications', icon: ListChecks },
+    { label: 'Pesan Sesi', href: '/student/book', icon: CalendarDays },
     { label: 'Sesi', href: '/student/sessions', icon: CalendarDays },
     { label: 'Materi', href: '/student/materials', icon: FileText },
     { label: 'Pembayaran', href: '/student/payments', icon: Receipt },
