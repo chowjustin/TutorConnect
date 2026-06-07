@@ -1,6 +1,18 @@
-import { PartialType } from '@nestjs/mapped-types';
-import { CreateUserDto } from './create-user.dto';
-import { IsOptional, IsString, IsEmail, IsEnum, MinLength } from 'class-validator';
-import { UserRole } from '@prisma/client';
+import { IsOptional, IsString, MinLength } from 'class-validator';
 
-export class UpdateUserDto extends PartialType(CreateUserDto) {}
+// email and role intentionally omitted — email change goes through a
+// dedicated verified flow; role is administrative-only.
+export class UpdateUserDto {
+  @IsOptional()
+  @IsString()
+  name?: string;
+
+  @IsOptional()
+  @IsString()
+  @MinLength(6)
+  password?: string;
+
+  @IsOptional()
+  @IsString()
+  phoneNumber?: string;
+}
