@@ -1,6 +1,7 @@
 'use client';
 
 import { useQuery } from '@tanstack/react-query';
+import { Wallet } from 'lucide-react';
 
 import api from '@/lib/api';
 import {
@@ -11,9 +12,10 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { StatusBadge } from '@/components/ui/status-badge';
+import { PageHeader } from '@/components/ui/page-header';
+import { EmptyState } from '@/components/ui/empty-state';
 import { formatDateTimeId, formatRupiah } from '@/lib/format';
 import { usePagination } from '@/hooks/use-pagination';
 import type { PaginatedApiResponse } from '@/types/api';
@@ -38,68 +40,90 @@ export default function StudentPaymentsPage() {
     },
   });
 
-  return (
-    <div className='space-y-6'>
-      <h1 className='h2'>Pembayaran</h1>
+  const empty = !listQ.isLoading && (listQ.data?.data.length ?? 0) === 0;
 
-      <Card>
-        <CardHeader>
-          <CardTitle>Instruksi Transfer</CardTitle>
-        </CardHeader>
-        <CardContent className='space-y-3 text-sm'>
-          {instructionsQ.isLoading ? (
-            <Skeleton className='h-20 w-full' />
-          ) : (
-            (instructionsQ.data ?? []).map((b) => (
-              <div key={b.id} className='rounded-md border p-3'>
-                <div className='font-semibold'>{b.bankName}</div>
-                <div>{b.accountNumber} a.n. {b.accountHolder}</div>
+  return (
+    <div className='space-y-8'>
+      <PageHeader
+        icon={Wallet}
+        title='Pembayaran'
+        description='Instruksi transfer dan riwayat pembayaran Anda.'
+      />
+
+      {/* Instructions: tight inline list, no Card */}
+      <section>
+        <h2 className='text-muted-foreground mb-3 text-xs font-medium tracking-wider uppercase'>
+          Instruksi Transfer
+        </h2>
+        {instructionsQ.isLoading ? (
+          <Skeleton className='h-20 w-full' />
+        ) : (
+          <div className='border-primary-100 divide-primary-100 divide-y rounded-lg border bg-white'>
+            {(instructionsQ.data ?? []).map((b) => (
+              <div
+                key={b.id}
+                className='flex flex-wrap items-baseline gap-x-4 gap-y-1 px-4 py-3 text-sm'
+              >
+                <span className='font-semibold'>{b.bankName}</span>
+                <span className='mono tabular-nums'>{b.accountNumber}</span>
+                <span className='text-muted-foreground'>
+                  a.n. {b.accountHolder}
+                </span>
                 {b.notes ? (
-                  <div className='text-muted-foreground text-xs'>
+                  <span className='text-muted-foreground basis-full text-xs'>
                     {b.notes}
-                  </div>
+                  </span>
                 ) : null}
               </div>
-            ))
-          )}
-        </CardContent>
-      </Card>
+            ))}
+          </div>
+        )}
+      </section>
 
-      <Card>
-        <CardHeader>
-          <CardTitle>Riwayat Pembayaran</CardTitle>
-        </CardHeader>
-        <CardContent>
-          {listQ.isLoading ? (
-            <Skeleton className='h-40 w-full' />
-          ) : (
+      {/* History: plain table, no Card */}
+      <section>
+        <h2 className='text-muted-foreground mb-3 text-xs font-medium tracking-wider uppercase'>
+          Riwayat Pembayaran
+        </h2>
+        {listQ.isLoading ? (
+          <Skeleton className='h-40 w-full' />
+        ) : empty ? (
+          <EmptyState
+            icon={Wallet}
+            title='Belum ada pembayaran'
+            description='Riwayat pembayaran akan tampil setelah Anda melakukan transaksi pertama.'
+          />
+        ) : (
+          <div className='border-primary-100 overflow-hidden rounded-lg border bg-white'>
             <Table>
               <TableHeader>
                 <TableRow>
                   <TableHead>Tanggal</TableHead>
                   <TableHead>Jenis</TableHead>
-                  <TableHead>Nominal</TableHead>
+                  <TableHead className='text-right'>Nominal</TableHead>
                   <TableHead>Status</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {listQ.data?.data.map((p) => {
-                  return (
-                    <TableRow key={p.id}>
-                      <TableCell>{formatDateTimeId(p.createdAt)}</TableCell>
-                      <TableCell>{p.kind}</TableCell>
-                      <TableCell>{formatRupiah(p.netAmount)}</TableCell>
-                      <TableCell>
-                        <StatusBadge kind='payment' status={p.status} />
-                      </TableCell>
-                    </TableRow>
-                  );
-                })}
+                {listQ.data?.data.map((p) => (
+                  <TableRow key={p.id}>
+                    <TableCell className='mono text-muted-foreground text-xs tabular-nums'>
+                      {formatDateTimeId(p.createdAt)}
+                    </TableCell>
+                    <TableCell>{p.kind}</TableCell>
+                    <TableCell className='mono text-right tabular-nums'>
+                      {formatRupiah(p.netAmount)}
+                    </TableCell>
+                    <TableCell>
+                      <StatusBadge kind='payment' status={p.status} />
+                    </TableCell>
+                  </TableRow>
+                ))}
               </TableBody>
             </Table>
-          )}
-        </CardContent>
-      </Card>
+          </div>
+        )}
+      </section>
     </div>
   );
 }

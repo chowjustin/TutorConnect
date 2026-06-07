@@ -2,6 +2,7 @@
 
 import * as React from 'react';
 import { useQuery } from '@tanstack/react-query';
+import { CalendarDays } from 'lucide-react';
 
 import api from '@/lib/api';
 import { Button } from '@/components/ui/button';
@@ -15,6 +16,8 @@ import {
 } from '@/components/ui/table';
 import { Skeleton } from '@/components/ui/skeleton';
 import { StatusBadge } from '@/components/ui/status-badge';
+import { PageHeader } from '@/components/ui/page-header';
+import { EmptyState } from '@/components/ui/empty-state';
 import { formatDateTimeId } from '@/lib/format';
 import { usePagination } from '@/hooks/use-pagination';
 import type { PaginatedApiResponse } from '@/types/api';
@@ -37,42 +40,66 @@ export default function TutorSessionsPage() {
     },
   });
 
+  const empty = !isLoading && (data?.data.length ?? 0) === 0;
+
   return (
-    <div className='space-y-4'>
-      <div className='flex items-center justify-between'>
-        <h1 className='h2'>Sesi</h1>
-        <Button variant='outline' size='sm' onClick={() => setPast((p) => !p)}>
-          {past ? 'Mendatang' : 'Riwayat'}
-        </Button>
-      </div>
+    <div className='space-y-6'>
+      <PageHeader
+        icon={CalendarDays}
+        title='Sesi'
+        description={past ? 'Riwayat sesi mengajar.' : 'Sesi mendatang.'}
+        actions={
+          <Button
+            variant='outline'
+            size='sm'
+            onClick={() => setPast((p) => !p)}
+          >
+            {past ? 'Mendatang' : 'Riwayat'}
+          </Button>
+        }
+      />
 
       {isLoading ? (
         <Skeleton className='h-40 w-full' />
+      ) : empty ? (
+        <EmptyState
+          icon={CalendarDays}
+          title={past ? 'Belum ada riwayat sesi' : 'Belum ada sesi terjadwal'}
+          description={
+            past
+              ? 'Sesi yang sudah selesai akan tampil di sini.'
+              : 'Siswa yang sudah diterima akan memesan sesi di sini.'
+          }
+        />
       ) : (
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead>Mulai</TableHead>
-              <TableHead>Format</TableHead>
-              <TableHead>Peserta</TableHead>
-              <TableHead>Status</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {data?.data.map((s) => {
-              return (
+        <div className='border-primary-100 overflow-hidden rounded-lg border bg-white'>
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Mulai</TableHead>
+                <TableHead>Format</TableHead>
+                <TableHead className='text-right'>Peserta</TableHead>
+                <TableHead>Status</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {data?.data.map((s) => (
                 <TableRow key={s.id}>
-                  <TableCell>{formatDateTimeId(s.startsAt)}</TableCell>
+                  <TableCell className='mono text-xs tabular-nums'>
+                    {formatDateTimeId(s.startsAt)}
+                  </TableCell>
                   <TableCell>{s.format}</TableCell>
-                  <TableCell>{s.attendees?.length ?? 0}</TableCell>
+                  <TableCell className='mono text-right tabular-nums'>
+                    {s.attendees?.length ?? 0}
+                  </TableCell>
                   <TableCell>
                     <StatusBadge kind='session' status={s.status} />
                   </TableCell>
                 </TableRow>
-              );
-            })}
-          </TableBody>
-        </Table>
+              ))}
+            </TableBody>
+          </Table>
+        </div>
       )}
     </div>
   );

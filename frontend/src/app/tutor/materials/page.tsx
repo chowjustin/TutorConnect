@@ -182,20 +182,20 @@ export default function TutorMaterialsPage() {
         </CardContent>
       </Card>
 
-      <Card>
-        <CardHeader>
-          <CardTitle>Daftar Materi</CardTitle>
-        </CardHeader>
-        <CardContent>
-          {tutorQuery.isLoading ? (
-            <Skeleton className='h-40 w-full' />
-          ) : empty ? (
-            <EmptyState
-              icon={FolderOpen}
-              title='Belum ada materi'
-              description='Unggah materi pertama Anda menggunakan form di atas.'
-            />
-          ) : (
+      <section>
+        <h2 className='text-muted-foreground mb-3 text-xs font-medium tracking-wider uppercase'>
+          Daftar Materi
+        </h2>
+        {tutorQuery.isLoading ? (
+          <Skeleton className='h-40 w-full' />
+        ) : empty ? (
+          <EmptyState
+            icon={FolderOpen}
+            title='Belum ada materi'
+            description='Unggah materi pertama Anda menggunakan form di atas.'
+          />
+        ) : (
+          <div className='border-primary-100 overflow-hidden rounded-lg border bg-white'>
             <Table>
               <TableHeader>
                 <TableRow>
@@ -208,7 +208,9 @@ export default function TutorMaterialsPage() {
               <TableBody>
                 {tutorQuery.data?.data.map((m) => (
                   <TableRow key={m.id}>
-                    <TableCell>{formatDateId(m.createdAt)}</TableCell>
+                    <TableCell className='mono text-muted-foreground text-xs tabular-nums'>
+                      {formatDateId(m.createdAt)}
+                    </TableCell>
                     <TableCell>{m.fileName ?? m.title ?? '—'}</TableCell>
                     <TableCell>{m.subject ?? '—'}</TableCell>
                     <TableCell>{m.level ?? '—'}</TableCell>
@@ -216,9 +218,9 @@ export default function TutorMaterialsPage() {
                 ))}
               </TableBody>
             </Table>
-          )}
-        </CardContent>
-      </Card>
+          </div>
+        )}
+      </section>
     </div>
   );
 }
