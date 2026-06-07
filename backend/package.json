@@ -22,7 +22,8 @@
     "admin:create": "ts-node scripts/create-admin.ts",
     "seed:dev": "ts-node scripts/seed-dev.ts",
     "db:truncate": "ts-node scripts/truncate-db.ts",
-    "db:reset": "ts-node scripts/truncate-db.ts --yes && ts-node scripts/seed-dev.ts"
+    "db:reset": "ts-node scripts/truncate-db.ts --yes && ts-node scripts/seed-dev.ts",
+    "db:count": "ts-node scripts/count-rows.ts"
   },
   "dependencies": {
     "@nestjs/common": "^11.0.1",
