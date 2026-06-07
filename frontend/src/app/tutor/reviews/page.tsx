@@ -28,9 +28,10 @@ interface TutorReviewsResponse {
 export default function TutorReviewsPage() {
   const user = useAuthStore.useUser();
 
+  const tutorProfileId = user?.tutorProfileId;
   const { data, isLoading } = useQuery<TutorReviewsResponse>({
-    queryKey: [`/reviews/tutor/${user?.id}`],
-    enabled: !!user?.id,
+    queryKey: [`/reviews/tutor/${tutorProfileId}`],
+    enabled: !!tutorProfileId,
   });
 
   return (

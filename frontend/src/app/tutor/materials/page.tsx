@@ -47,16 +47,19 @@ export default function TutorMaterialsPage() {
   const [description, setDescription] = React.useState('');
   const upload = useUploadMaterial();
 
+  const tutorProfileId = user?.tutorProfileId;
   const tutorQuery = useQuery<{
     data: MaterialRow[];
     meta: PaginatedApiResponse<MaterialRow[]>['meta'];
   }>({
-    queryKey: ['/materials/tutor', user?.id, params],
+    queryKey: ['/materials/tutor', tutorProfileId, params],
     queryFn: async () => {
-      const res = await api.get(`/materials/tutor/${user!.id}`, { params });
+      const res = await api.get(`/materials/tutor/${tutorProfileId}`, {
+        params,
+      });
       return res.data;
     },
-    enabled: !!user?.id,
+    enabled: !!tutorProfileId,
   });
 
   const onUpload = () => {

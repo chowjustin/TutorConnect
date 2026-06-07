@@ -32,16 +32,19 @@ export default function StudentMaterialsPage() {
   const user = useAuthStore.useUser();
   const { params } = usePagination();
 
+  const studentProfileId = user?.studentProfileId;
   const { data, isLoading } = useQuery<{
     data: MaterialRow[];
     meta: PaginatedApiResponse<MaterialRow[]>['meta'];
   }>({
-    queryKey: ['/materials/student', user?.id, params],
+    queryKey: ['/materials/student', studentProfileId, params],
     queryFn: async () => {
-      const res = await api.get(`/materials/student/${user!.id}`, { params });
+      const res = await api.get(`/materials/student/${studentProfileId}`, {
+        params,
+      });
       return res.data;
     },
-    enabled: !!user?.id,
+    enabled: !!studentProfileId,
   });
 
   const download = async (id: string, fileName: string | null) => {

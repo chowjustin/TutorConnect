@@ -13,6 +13,9 @@ export interface User {
   emailVerifiedAt: string | null;
   referralCode: string | null;
   referredById: string | null;
+  // Populated by GET /users/me; null on register/login payloads.
+  tutorProfileId?: string | null;
+  studentProfileId?: string | null;
   createdAt: string;
   updatedAt: string;
 }
