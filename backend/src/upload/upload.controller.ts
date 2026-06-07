@@ -11,20 +11,24 @@ import {
   UseInterceptors,
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
-import { createReadStream } from 'fs';
 import type { Request } from 'express';
+import { S3Service } from '../s3/s3.service';
 import { UploadService } from './upload.service';
 import {
   imageFileFilter,
   materialFileFilter,
   multerLimits,
   multerStorage,
+  objectKey,
 } from './multer.config';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 
 @Controller('upload')
 export class UploadController {
-  constructor(private readonly uploadService: UploadService) {}
+  constructor(
+    private readonly uploadService: UploadService,
+    private readonly s3: S3Service,
+  ) {}
 
   @Post('profile-picture')
   @UseGuards(JwtAuthGuard)
@@ -61,7 +65,9 @@ export class UploadController {
     @Req() req: Request,
   ) {
     if (!file) throw new BadRequestException('No file uploaded');
-    return this.uploadService.buildFileInfo(req, 'verification', file.filename);
+    const key = objectKey('verification', file.originalname);
+    await this.s3.putObject(key, file.buffer, file.mimetype);
+    return this.uploadService.buildFileInfo(req, 'verification', key);
   }
 
   @Get('material/:materialId')
@@ -74,6 +80,10 @@ export class UploadController {
       materialId,
       req.user.sub,
     );
-    return new StreamableFile(createReadStream(material.absolutePath));
+    const { stream, contentType } = await this.s3.getObject(material.fileUrl);
+    return new StreamableFile(stream, {
+      type: contentType,
+      disposition: `attachment; filename="${encodeURIComponent(material.title)}"`,
+    });
   }
 }

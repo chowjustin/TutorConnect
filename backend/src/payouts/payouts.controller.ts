@@ -20,7 +20,12 @@ import { EmailVerified } from '../auth/email-verified.decorator';
 import { EmailVerifiedGuard } from '../auth/email-verified.guard';
 import { IdempotencyInterceptor } from '../common/idempotency.interceptor';
 import { PaginationQueryDto } from '../common/dto/pagination.dto';
-import { multerStorage, materialFileFilter } from '../upload/multer.config';
+import {
+  multerStorage,
+  materialFileFilter,
+  objectKey,
+} from '../upload/multer.config';
+import { S3Service } from '../s3/s3.service';
 import { PayoutsService } from './payouts.service';
 import { RejectPayoutDto, RequestPayoutDto } from './dto/payout.dto';
 
@@ -53,7 +58,10 @@ export class TutorPayoutsController {
 @UseGuards(JwtAuthGuard, RolesGuard)
 @Controller('admin/payouts')
 export class AdminPayoutsController {
-  constructor(private readonly svc: PayoutsService) {}
+  constructor(
+    private readonly svc: PayoutsService,
+    private readonly s3: S3Service,
+  ) {}
 
   @Roles(UserRole.ADMIN)
   @Get()
@@ -70,14 +78,15 @@ export class AdminPayoutsController {
       limits: { fileSize: 5 * 1024 * 1024 },
     }),
   )
-  markPaid(
+  async markPaid(
     @Request() req,
     @Param('id') id: string,
     @UploadedFile() file: Express.Multer.File,
   ) {
     if (!file) throw new BadRequestException('proofImage required');
-    const proofUrl = `/uploads/payouts/${file.filename}`;
-    return this.svc.markPaid(req.user.sub, id, proofUrl);
+    const key = objectKey('payouts', file.originalname);
+    await this.s3.putObject(key, file.buffer, file.mimetype);
+    return this.svc.markPaid(req.user.sub, id, key);
   }
 
   @Roles(UserRole.ADMIN)

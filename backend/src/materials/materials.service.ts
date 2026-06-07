@@ -5,12 +5,17 @@ import {
 } from '@nestjs/common';
 import { EducationLevel, MaterialKind, Subject } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
+import { S3Service } from '../s3/s3.service';
+import { objectKey } from '../upload/multer.config';
 import { PaginationQueryDto } from '../common/dto/pagination.dto';
 import { paginatePrisma } from '../common/paginate';
 
 @Injectable()
 export class MaterialsService {
-  constructor(private prisma: PrismaService) {}
+  constructor(
+    private prisma: PrismaService,
+    private s3: S3Service,
+  ) {}
 
   async userOwnsTutorProfile(userId: string, tutorProfileId: string) {
     const tp = await this.prisma.tutorProfile.findUnique({
@@ -51,10 +56,13 @@ export class MaterialsService {
       }
     }
 
+    const key = objectKey('materials', file.originalname);
+    await this.s3.putObject(key, file.buffer, file.mimetype);
+
     const material = await this.prisma.material.create({
       data: {
         title: file.originalname,
-        fileUrl: `materials/${file.filename}`,
+        fileUrl: key,
         tutorId: tutor.id,
       },
     });
@@ -79,7 +87,11 @@ export class MaterialsService {
   async getMaterialsForTutor(
     tutorProfileId: string,
     pagination: PaginationQueryDto,
-    filters?: { subject?: Subject; level?: EducationLevel; kind?: MaterialKind },
+    filters?: {
+      subject?: Subject;
+      level?: EducationLevel;
+      kind?: MaterialKind;
+    },
   ) {
     return paginatePrisma(this.prisma.material, pagination, {
       where: {
@@ -100,7 +112,11 @@ export class MaterialsService {
   async getMaterialsForStudent(
     studentProfileId: string,
     pagination: PaginationQueryDto,
-    filters?: { subject?: Subject; level?: EducationLevel; kind?: MaterialKind },
+    filters?: {
+      subject?: Subject;
+      level?: EducationLevel;
+      kind?: MaterialKind;
+    },
   ) {
     return paginatePrisma(this.prisma.material, pagination, {
       where: {

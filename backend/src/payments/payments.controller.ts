@@ -21,14 +21,22 @@ import { EmailVerified } from '../auth/email-verified.decorator';
 import { EmailVerifiedGuard } from '../auth/email-verified.guard';
 import { IdempotencyInterceptor } from '../common/idempotency.interceptor';
 import { PaginationQueryDto } from '../common/dto/pagination.dto';
-import { multerStorage, materialFileFilter } from '../upload/multer.config';
+import {
+  multerStorage,
+  materialFileFilter,
+  objectKey,
+} from '../upload/multer.config';
+import { S3Service } from '../s3/s3.service';
 import { PaymentsService } from './payments.service';
 import { RejectPaymentDto, UploadProofDto } from './dto/upload-proof.dto';
 
 @UseGuards(JwtAuthGuard, RolesGuard, EmailVerifiedGuard)
 @Controller('payments')
 export class PaymentsController {
-  constructor(private readonly svc: PaymentsService) {}
+  constructor(
+    private readonly svc: PaymentsService,
+    private readonly s3: S3Service,
+  ) {}
 
   @EmailVerified()
   @Post('upload-proof')
@@ -46,7 +54,9 @@ export class PaymentsController {
     @UploadedFile() file: Express.Multer.File,
   ) {
     if (!file) throw new BadRequestException('proofImage required');
-    const proofUrl = `/uploads/payments/${file.filename}`;
+    const key = objectKey('payments', file.originalname);
+    await this.s3.putObject(key, file.buffer, file.mimetype);
+    const proofUrl = key;
     return this.svc.uploadProof(
       req.user.sub,
       dto.kind,

@@ -6,6 +6,7 @@ import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { PrismaModule } from './prisma/prisma.module';
 import { PrismaExceptionFilter } from './prisma/prisma-exception.filter';
+import { S3Module } from './s3/s3.module';
 import { AuthModule } from './auth/auth.module';
 import { UploadModule } from './upload/upload.module';
 import { UsersModule } from './users/users.module';
@@ -36,11 +37,10 @@ import { MailModule } from './mail/mail.module';
 @Module({
   imports: [
     ScheduleModule.forRoot(),
-    ThrottlerModule.forRoot([
-      { name: 'default', ttl: 60_000, limit: 100 },
-    ]),
+    ThrottlerModule.forRoot([{ name: 'default', ttl: 60_000, limit: 100 }]),
     MailModule,
     PrismaModule,
+    S3Module,
     UsersModule,
     AuthModule,
     UploadModule,

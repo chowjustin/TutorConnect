@@ -1,34 +1,26 @@
-import { diskStorage } from 'multer';
-import { extname } from 'path';
-import { randomUUID } from 'crypto';
 import { BadRequestException } from '@nestjs/common';
+import { randomUUID } from 'crypto';
 import type { Request } from 'express';
+import { memoryStorage } from 'multer';
+import { extname } from 'path';
 
-type CbVoid = (error: Error | null, destination: string) => void;
 type CbBool = (error: Error | null, acceptFile: boolean) => void;
 
-const FIELD_TO_FOLDER: Record<string, string> = {
-  'profile-picture': './uploads/profile',
-  material: './uploads/materials',
-  file: './uploads/materials',
-  'verification-doc': './uploads/verification',
-  proofImage: './uploads/payments',
-};
+/**
+ * Files are buffered in memory and then streamed to object storage (MinIO)
+ * by the controller/service. We never touch local disk.
+ */
+export const multerStorage = memoryStorage();
 
-export const multerStorage = diskStorage({
-  destination: (_req: Request, file: Express.Multer.File, cb: CbVoid) => {
-    const folder = FIELD_TO_FOLDER[file.fieldname];
-    if (!folder) {
-      cb(new BadRequestException(`Unsupported upload field: ${file.fieldname}`), '');
-      return;
-    }
-    cb(null, folder);
-  },
-  filename: (_req: Request, file: Express.Multer.File, cb: CbVoid) => {
-    const ext = extname(file.originalname).toLowerCase();
-    cb(null, `${randomUUID()}${ext}`);
-  },
-});
+/**
+ * Build a bare object key for `prefix` (e.g. `payments`) using a random UUID
+ * and the original extension, e.g. `payments/3f2c....png`. The same key is
+ * persisted in the DB and served back via the public `/uploads/<key>` route.
+ */
+export function objectKey(prefix: string, originalname: string): string {
+  const ext = extname(originalname).toLowerCase();
+  return `${prefix}/${randomUUID()}${ext}`;
+}
 
 const IMAGE_MIME = /^image\/(png|jpe?g)$/;
 
