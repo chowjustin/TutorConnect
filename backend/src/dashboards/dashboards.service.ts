@@ -164,7 +164,8 @@ export class DashboardsService {
 
     return {
       activeTutorCount: activeTutors?.tutors.length ?? 0,
-      upcomingSessions,
+      upcomingSessions: upcomingSessions.length,
+      upcomingSessionsList: upcomingSessions,
       recentMaterials,
       applicationCounts: Object.fromEntries(
         apps.map((a) => [a.status, a._count._all]),

@@ -16,6 +16,7 @@ import { BentoTile } from '@/components/ui/bento-tile';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { formatDateTimeId, formatRupiah } from '@/lib/format';
+import { classFormatLabel } from '@/constant/enums';
 import type { SessionItem } from '@/app/student/sessions/types';
 import type { PaginatedApiResponse } from '@/types/api';
 
@@ -148,7 +149,8 @@ export default function TutorDashboardPage() {
                     {formatDateTimeId(s.startsAt)}
                   </p>
                   <p className='text-muted-foreground text-xs'>
-                    {s.attendees?.length ?? 0} peserta · {s.format}
+                    {s.attendees?.length ?? 0} peserta ·{' '}
+                    {classFormatLabel(s.format)}
                   </p>
                 </div>
               </div>

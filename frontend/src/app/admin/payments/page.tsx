@@ -18,7 +18,9 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { StatusBadge } from '@/components/ui/status-badge';
 import { PageHeader } from '@/components/ui/page-header';
 import { ImageLightbox } from '@/components/ui/image-lightbox';
+import { ConfirmDialog } from '@/components/ui/confirm-dialog';
 import { formatDateTimeId, formatRupiah } from '@/lib/format';
+import { paymentKindLabel } from '@/constant/enums';
 import { resolveFileUrl } from '@/lib/file-url';
 import { usePagination } from '@/hooks/use-pagination';
 import type { PaginatedApiResponse } from '@/types/api';
@@ -30,6 +32,8 @@ export default function AdminPaymentsPage() {
   const { params } = usePagination();
   const confirm = useConfirmPayment();
   const reject = useRejectPayment();
+  const [confirmTarget, setConfirmTarget] = React.useState<string | null>(null);
+  const [rejectTarget, setRejectTarget] = React.useState<string | null>(null);
 
   const { data, isLoading } = useQuery<{
     data: PaymentItem[];
@@ -70,7 +74,7 @@ export default function AdminPaymentsPage() {
               return (
                 <TableRow key={p.id}>
                   <TableCell>{formatDateTimeId(p.createdAt)}</TableCell>
-                  <TableCell>{p.kind}</TableCell>
+                  <TableCell>{paymentKindLabel(p.kind)}</TableCell>
                   <TableCell className='mono'>
                     {formatRupiah(p.netAmount)}
                   </TableCell>
@@ -97,21 +101,14 @@ export default function AdminPaymentsPage() {
                       <div className='flex gap-2'>
                         <Button
                           size='sm'
-                          onClick={() => confirm.mutate(p.id)}
-                          disabled={confirm.isPending}
+                          onClick={() => setConfirmTarget(p.id)}
                         >
                           Konfirmasi
                         </Button>
                         <Button
                           size='sm'
                           variant='destructive'
-                          onClick={() =>
-                            reject.mutate({
-                              id: p.id,
-                              notes: prompt('Alasan?') ?? undefined,
-                            })
-                          }
-                          disabled={reject.isPending}
+                          onClick={() => setRejectTarget(p.id)}
                         >
                           Tolak
                         </Button>
@@ -128,6 +125,41 @@ export default function AdminPaymentsPage() {
         open={!!lightboxSrc}
         onClose={() => setLightboxSrc(null)}
         slides={lightboxSrc ? [{ src: lightboxSrc }] : []}
+      />
+
+      <ConfirmDialog
+        open={!!confirmTarget}
+        onOpenChange={(v) => !v && setConfirmTarget(null)}
+        title='Konfirmasi pembayaran?'
+        description='Saldo tutor akan dikredit dan langganan/featured akan aktif.'
+        confirmLabel='Ya, konfirmasi'
+        loading={confirm.isPending}
+        onConfirm={() => {
+          if (!confirmTarget) return;
+          confirm.mutate(confirmTarget, {
+            onSuccess: () => setConfirmTarget(null),
+          });
+        }}
+      />
+
+      <ConfirmDialog
+        open={!!rejectTarget}
+        onOpenChange={(v) => !v && setRejectTarget(null)}
+        tone='danger'
+        title='Tolak pembayaran?'
+        description='Pengguna akan diberi tahu alasan penolakan.'
+        confirmLabel='Tolak'
+        noteLabel='Alasan penolakan'
+        notePlaceholder='Misal: bukti tidak jelas, jumlah tidak sesuai...'
+        noteRequired
+        loading={reject.isPending}
+        onConfirm={(note) => {
+          if (!rejectTarget) return;
+          reject.mutate(
+            { id: rejectTarget, notes: note },
+            { onSuccess: () => setRejectTarget(null) },
+          );
+        }}
       />
     </div>
   );

@@ -16,6 +16,7 @@ import { BentoTile } from '@/components/ui/bento-tile';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { formatDateTimeId } from '@/lib/format';
+import { classFormatLabel } from '@/constant/enums';
 import type { SessionItem } from '@/app/student/sessions/types';
 import type { PaginatedApiResponse } from '@/types/api';
 
@@ -78,7 +79,7 @@ export default function StudentDashboardPage() {
                   {nextSession.tutor?.user.name ?? '—'}
                 </p>
                 <p className='text-muted-foreground text-sm'>
-                  Format {nextSession.format}
+                  Format {classFormatLabel(nextSession.format)}
                 </p>
               </div>
             ) : (
@@ -166,7 +167,7 @@ export default function StudentDashboardPage() {
                   </p>
                 </div>
                 <span className='text-muted-foreground text-xs'>
-                  {s.format}
+                  {classFormatLabel(s.format)}
                 </span>
               </Link>
             ))}

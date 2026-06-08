@@ -463,6 +463,7 @@ export class TutorsService {
       where: { id },
       data: {
         bio: dto.bio,
+        experience: dto.experience,
         hourlyRate: dto.hourlyRate,
         subjects: dto.subjects,
         whatsappNumber: dto.whatsappNumber,

@@ -55,6 +55,7 @@ export interface TutorProfileForm {
 
 export interface UpdateTutorRequest {
   bio?: string;
+  experience?: number;
   hourlyRate?: number;
   whatsappNumber?: string;
   educationBackground?: string;

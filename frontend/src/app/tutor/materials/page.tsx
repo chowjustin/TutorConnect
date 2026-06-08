@@ -2,13 +2,14 @@
 
 import * as React from 'react';
 import { useQuery } from '@tanstack/react-query';
+import { FormProvider, useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { z } from 'zod';
 import { Download, Eye, FileText, FolderOpen } from 'lucide-react';
 
 import api from '@/lib/api';
 import useAuthStore from '@/store/use-auth-store';
 import { Button } from '@/components/ui/button';
-import { Textarea } from '@/components/ui/textarea';
-import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import {
   Table,
@@ -21,21 +22,23 @@ import {
 import { Skeleton } from '@/components/ui/skeleton';
 import { PageHeader } from '@/components/ui/page-header';
 import { EmptyState } from '@/components/ui/empty-state';
-import { Dropzone } from '@/components/form/dropzone-field';
+import { DropzoneField } from '@/components/form/dropzone-field';
+import { SelectField } from '@/components/form/select-field';
+import { TextareaField } from '@/components/form/textarea-field';
 import {
   Dialog,
   DialogContent,
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
+import { downloadFromPath, fetchBlob } from '@/lib/download';
 import { formatDateId } from '@/lib/format';
+import {
+  EDUCATION_LEVEL_OPTIONS,
+  SUBJECT_OPTIONS,
+  educationLevelLabel,
+  subjectLabel,
+} from '@/constant/enums';
 import { usePagination } from '@/hooks/use-pagination';
 import type { PaginatedApiResponse } from '@/types/api';
 
@@ -52,40 +55,24 @@ interface MaterialRow {
   createdAt: string;
 }
 
-const SUBJECT_LABEL: Record<string, string> = {
-  MATH: 'Matematika',
-  PHYSICS: 'Fisika',
-  CHEMISTRY: 'Kimia',
-  ENGLISH: 'Bahasa Inggris',
-  COMPUTER_SCIENCE: 'Komputer',
-  ECONOMICS: 'Ekonomi',
-  ACCOUNTING: 'Akuntansi',
-};
-
-const LEVEL_LABEL: Record<string, string> = {
-  JUNIOR_HIGH: 'SMP',
-  SENIOR_HIGH: 'SMA',
-  UNIVERSITY: 'Universitas',
-};
-
-const SUBJECTS = Object.keys(SUBJECT_LABEL);
-const LEVELS = Object.keys(LEVEL_LABEL);
-
-async function fetchMaterialBlob(id: string) {
-  const res = await api.get(`/upload/material/${id}`, { responseType: 'blob' });
-  return res.data as Blob;
+interface UploadForm {
+  file: File | null;
+  subject: string;
+  level: string;
+  description: string;
 }
 
+const uploadSchema = z.object({
+  file: z.any().refine((v) => v instanceof File, 'Pilih file materi'),
+  subject: z.string(),
+  level: z.string(),
+  description: z.string(),
+}) satisfies z.ZodType<UploadForm>;
+
+const materialPath = (id: string) => `/upload/material/${id}`;
+
 async function downloadMaterial(id: string, fallbackName: string) {
-  const blob = await fetchMaterialBlob(id);
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement('a');
-  a.href = url;
-  a.download = fallbackName || `material-${id}`;
-  document.body.appendChild(a);
-  a.click();
-  a.remove();
-  URL.revokeObjectURL(url);
+  await downloadFromPath(materialPath(id), fallbackName || `material-${id}`);
 }
 
 interface PreviewState {
@@ -99,15 +86,16 @@ export default function TutorMaterialsPage() {
   const user = useAuthStore.useUser();
   const tutorProfileId = user?.tutorProfileId;
   const { params } = usePagination();
-  const [file, setFile] = React.useState<File | null>(null);
-  const [subject, setSubject] = React.useState<string>('');
-  const [level, setLevel] = React.useState<string>('');
-  const [description, setDescription] = React.useState('');
   const [preview, setPreview] = React.useState<PreviewState | null>(null);
   const upload = useUploadMaterial();
 
+  const methods = useForm<UploadForm>({
+    resolver: zodResolver(uploadSchema),
+    defaultValues: { file: null, subject: '', level: '', description: '' },
+  });
+
   const openPreview = async (id: string, name: string) => {
-    const blob = await fetchMaterialBlob(id);
+    const blob = await fetchBlob(materialPath(id));
     const url = URL.createObjectURL(blob);
     setPreview({ id, name, url, mime: blob.type });
   };
@@ -131,25 +119,18 @@ export default function TutorMaterialsPage() {
     enabled: !!tutorProfileId,
   });
 
-  const onUpload = () => {
-    if (!file) return;
+  const onUpload = methods.handleSubmit((values) => {
+    if (!values.file) return;
     upload.mutate(
       {
-        file,
-        subject: subject || undefined,
-        level: level || undefined,
-        description: description || undefined,
+        file: values.file,
+        subject: values.subject || undefined,
+        level: values.level || undefined,
+        description: values.description || undefined,
       },
-      {
-        onSuccess: () => {
-          setFile(null);
-          setSubject('');
-          setLevel('');
-          setDescription('');
-        },
-      },
+      { onSuccess: () => methods.reset() },
     );
-  };
+  });
 
   const empty =
     !tutorQuery.isLoading && (tutorQuery.data?.data.length ?? 0) === 0;
@@ -166,65 +147,47 @@ export default function TutorMaterialsPage() {
         <CardHeader>
           <CardTitle>Unggah Materi</CardTitle>
         </CardHeader>
-        <CardContent className='space-y-4'>
-          <Dropzone
-            value={file}
-            onChange={setFile}
-            accept='.pdf,.jpg,.jpeg,.png'
-            maxSizeMB={20}
-          />
+        <CardContent>
+          <FormProvider {...methods}>
+            <form onSubmit={onUpload} className='space-y-4'>
+              <DropzoneField<UploadForm>
+                name='file'
+                accept='.pdf,.jpg,.jpeg,.png'
+                maxSizeMB={20}
+              />
 
-          <div className='grid gap-4 sm:grid-cols-2'>
-            <div className='space-y-1.5'>
-              <Label>Mapel</Label>
-              <Select value={subject} onValueChange={setSubject}>
-                <SelectTrigger className='w-full'>
-                  <SelectValue placeholder='Pilih mapel' />
-                </SelectTrigger>
-                <SelectContent>
-                  {SUBJECTS.map((s) => (
-                    <SelectItem key={s} value={s}>
-                      {SUBJECT_LABEL[s]}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-            <div className='space-y-1.5'>
-              <Label>Level</Label>
-              <Select value={level} onValueChange={setLevel}>
-                <SelectTrigger className='w-full'>
-                  <SelectValue placeholder='Pilih level' />
-                </SelectTrigger>
-                <SelectContent>
-                  {LEVELS.map((l) => (
-                    <SelectItem key={l} value={l}>
-                      {LEVEL_LABEL[l]}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-          </div>
+              <SelectField<UploadForm>
+                name='subject'
+                label='Mapel'
+                options={SUBJECT_OPTIONS}
+                placeholder='Pilih mapel'
+                className='w-full'
+              />
+              <SelectField<UploadForm>
+                name='level'
+                label='Level'
+                options={EDUCATION_LEVEL_OPTIONS}
+                placeholder='Pilih level'
+                className='w-full'
+              />
 
-          <div className='space-y-1.5'>
-            <Label>Deskripsi (opsional)</Label>
-            <Textarea
-              placeholder='Ringkasan singkat materi...'
-              value={description}
-              onChange={(e) => setDescription(e.target.value)}
-              rows={3}
-            />
-          </div>
+              <TextareaField<UploadForm>
+                name='description'
+                label='Deskripsi (opsional)'
+                placeholder='Ringkasan singkat materi...'
+                rows={3}
+              />
 
-          <Button
-            onClick={onUpload}
-            disabled={upload.isPending || !file}
-            className='w-full'
-            size='lg'
-          >
-            {upload.isPending ? 'Mengunggah...' : 'Unggah'}
-          </Button>
+              <Button
+                type='submit'
+                disabled={upload.isPending}
+                className='w-full'
+                size='lg'
+              >
+                {upload.isPending ? 'Mengunggah...' : 'Unggah'}
+              </Button>
+            </form>
+          </FormProvider>
         </CardContent>
       </Card>
 
@@ -263,14 +226,8 @@ export default function TutorMaterialsPage() {
                       <TableCell className='max-w-xs truncate'>
                         {name}
                       </TableCell>
-                      <TableCell>
-                        {m.subject
-                          ? (SUBJECT_LABEL[m.subject] ?? m.subject)
-                          : '—'}
-                      </TableCell>
-                      <TableCell>
-                        {m.level ? (LEVEL_LABEL[m.level] ?? m.level) : '—'}
-                      </TableCell>
+                      <TableCell>{subjectLabel(m.subject)}</TableCell>
+                      <TableCell>{educationLevelLabel(m.level)}</TableCell>
                       <TableCell>
                         <div className='flex gap-2'>
                           <Button

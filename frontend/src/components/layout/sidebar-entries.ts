@@ -69,8 +69,6 @@ export const SIDEBAR_ENTRIES: Record<Role, SidebarEntry[]> = {
       icon: ShieldCheck,
     },
     { label: 'Promo', href: '/admin/promo', icon: Sparkles },
-    { label: 'Featured', href: '/admin/featured', icon: Sparkles },
-    { label: 'Referral', href: '/admin/referrals', icon: Gift },
     { label: 'Pengguna', href: '/admin/users', icon: Users },
   ],
 };

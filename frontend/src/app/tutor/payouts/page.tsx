@@ -1,13 +1,13 @@
 'use client';
 
-import * as React from 'react';
 import { useQuery } from '@tanstack/react-query';
+import { FormProvider, useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { z } from 'zod';
 import { PiggyBank } from 'lucide-react';
 
 import api from '@/lib/api';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
 import {
   Table,
   TableBody,
@@ -20,6 +20,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { StatusBadge } from '@/components/ui/status-badge';
 import { PageHeader } from '@/components/ui/page-header';
 import { EmptyState } from '@/components/ui/empty-state';
+import { TextField } from '@/components/form/text-field';
 import { formatDateTimeId, formatRupiah } from '@/lib/format';
 import { usePagination } from '@/hooks/use-pagination';
 import { MIN_PAYOUT_RUPIAH } from '@/constant/common';
@@ -36,10 +37,26 @@ interface PayoutItem {
   paidAt: string | null;
 }
 
+interface PayoutForm {
+  amount: string;
+}
+const schema = z.object({
+  amount: z
+    .string()
+    .refine(
+      (s) => Number(s) >= MIN_PAYOUT_RUPIAH,
+      `Minimum ${formatRupiah(MIN_PAYOUT_RUPIAH)}`,
+    ),
+}) satisfies z.ZodType<PayoutForm>;
+
 export default function PayoutsPage() {
-  const [amount, setAmount] = React.useState('');
   const request = useRequestPayout();
   const { params } = usePagination();
+
+  const methods = useForm<PayoutForm>({
+    resolver: zodResolver(schema),
+    defaultValues: { amount: String(MIN_PAYOUT_RUPIAH) },
+  });
 
   const { data, isLoading } = useQuery<{
     data: PayoutItem[];
@@ -52,13 +69,11 @@ export default function PayoutsPage() {
     },
   });
 
-  const onSubmit = () => {
-    const n = Number(amount);
-    if (!Number.isFinite(n) || n < MIN_PAYOUT_RUPIAH) {
-      return alert(`Minimum ${formatRupiah(MIN_PAYOUT_RUPIAH)}`);
-    }
-    request.mutate(n);
-  };
+  const onSubmit = methods.handleSubmit((values) => {
+    request.mutate(Number(values.amount), {
+      onSuccess: () => methods.reset({ amount: String(MIN_PAYOUT_RUPIAH) }),
+    });
+  });
 
   const empty = !isLoading && (data?.data.length ?? 0) === 0;
 
@@ -70,32 +85,32 @@ export default function PayoutsPage() {
         description='Ajukan pencairan saldo dan pantau status pembayaran.'
       />
 
-      {/* Inline request form, no Card */}
       <section>
         <h2 className='text-muted-foreground mb-3 text-xs font-medium tracking-wider uppercase'>
           Ajukan Pencairan
         </h2>
-        <div className='border-primary-100 flex flex-wrap items-end gap-3 rounded-lg border bg-white p-4'>
-          <div className='flex-1 space-y-1.5'>
-            <Label htmlFor='payout-amount'>Jumlah (IDR)</Label>
-            <Input
-              id='payout-amount'
-              value={amount}
-              onChange={(e) => setAmount(e.target.value.replace(/\D/g, ''))}
-              placeholder={String(MIN_PAYOUT_RUPIAH)}
-              className='mono tabular-nums'
-            />
-            <p className='text-muted-foreground text-xs'>
-              Minimum {formatRupiah(MIN_PAYOUT_RUPIAH)}
-            </p>
-          </div>
-          <Button onClick={onSubmit} disabled={request.isPending}>
-            {request.isPending ? 'Memproses...' : 'Ajukan'}
-          </Button>
-        </div>
+        <FormProvider {...methods}>
+          <form
+            onSubmit={onSubmit}
+            className='border-primary-100 flex flex-wrap items-center gap-3 rounded-lg border bg-white p-4'
+          >
+            <div className='flex-1'>
+              <TextField<PayoutForm>
+                name='amount'
+                type='number'
+                label='Jumlah (IDR)'
+                placeholder={String(MIN_PAYOUT_RUPIAH)}
+                className='mono tabular-nums'
+                helperText={`Minimum ${formatRupiah(MIN_PAYOUT_RUPIAH)}`}
+              />
+            </div>
+            <Button type='submit' disabled={request.isPending}>
+              {request.isPending ? 'Memproses...' : 'Ajukan'}
+            </Button>
+          </form>
+        </FormProvider>
       </section>
 
-      {/* History table, no Card */}
       <section>
         <h2 className='text-muted-foreground mb-3 text-xs font-medium tracking-wider uppercase'>
           Riwayat

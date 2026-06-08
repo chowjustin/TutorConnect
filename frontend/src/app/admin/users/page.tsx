@@ -15,6 +15,7 @@ import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Input } from '@/components/ui/input';
 import { formatDateId } from '@/lib/format';
+import { roleLabel } from '@/constant/enums';
 import { usePagination } from '@/hooks/use-pagination';
 import type { PaginatedApiResponse } from '@/types/api';
 import type { User } from '@/types/shared';
@@ -69,7 +70,7 @@ export default function AdminUsersPage() {
                 <TableCell>{u.name}</TableCell>
                 <TableCell>{u.email}</TableCell>
                 <TableCell>
-                  <Badge variant='secondary'>{u.role}</Badge>
+                  <Badge variant='secondary'>{roleLabel(u.role)}</Badge>
                 </TableCell>
                 <TableCell>{formatDateId(u.createdAt)}</TableCell>
               </TableRow>

@@ -6,6 +6,11 @@ import { useParams } from 'next/navigation';
 import { GraduationCap, Star } from 'lucide-react';
 
 import api from '@/lib/api';
+import {
+  educationLevelLabels,
+  subjectLabels,
+  teachingMethodLabels,
+} from '@/constant/enums';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -33,6 +38,12 @@ interface ReviewsAggregate {
   average: number;
 }
 
+interface MyApplication {
+  id: string;
+  tutorId: string;
+  status: 'PENDING' | 'ACCEPTED' | 'REJECTED';
+}
+
 export default function StudentTutorDetailPage() {
   const params = useParams<{ id: string }>();
   const tutorId = params.id;
@@ -47,6 +58,22 @@ export default function StudentTutorDetailPage() {
     queryKey: [`/reviews/tutor/${tutorId}`],
     enabled: !!tutorId,
   });
+
+  const myAppsQ = useQuery<{ data: MyApplication[] }>({
+    queryKey: ['/applications/student', { per_page: 50 }],
+    queryFn: async () => {
+      const res = await api.get('/applications/student', {
+        params: { per_page: 50 },
+      });
+      return res.data;
+    },
+  });
+
+  const existingApp = myAppsQ.data?.data.find(
+    (a) =>
+      a.tutorId === tutorId &&
+      (a.status === 'PENDING' || a.status === 'ACCEPTED'),
+  );
 
   const t = tutorQ.data;
   const initials = (t?.user.name ?? '')
@@ -66,11 +93,11 @@ export default function StudentTutorDetailPage() {
       {tutorQ.isLoading || !t ? (
         <Skeleton className='h-60 w-full' />
       ) : (
-        <Card className='hover:shadow-md hover:shadow-primary-500/5 transition-shadow'>
+        <Card className='hover:shadow-primary-500/5 transition-shadow hover:shadow-md'>
           <CardContent className='space-y-5 pt-6'>
             <div className='flex items-start gap-4'>
-              <Avatar className='size-16 ring-2 ring-primary-100'>
-                <AvatarFallback className='bg-gradient-to-br from-primary-400 to-primary-600 text-white font-bold'>
+              <Avatar className='ring-primary-100 size-16 ring-2'>
+                <AvatarFallback className='from-primary-400 to-primary-600 bg-gradient-to-br font-bold text-white'>
                   {initials}
                 </AvatarFallback>
               </Avatar>
@@ -85,38 +112,73 @@ export default function StudentTutorDetailPage() {
                 </div>
               </div>
               <div className='text-right'>
-                <div className='mono text-xl font-bold text-primary-900'>
+                <div className='mono text-primary-900 text-xl font-bold'>
                   {t.hourlyRate ? formatRupiah(t.hourlyRate) : '—'}
                 </div>
                 <div className='text-muted-foreground text-xs'>per jam</div>
               </div>
             </div>
 
-            {t.bio ? (
-              <p className='text-sm leading-relaxed'>{t.bio}</p>
-            ) : null}
+            {t.bio ? <p className='text-sm leading-relaxed'>{t.bio}</p> : null}
 
             <div className='grid gap-4 sm:grid-cols-2'>
-              <Section title='Mata Pelajaran' items={t.subjects} />
-              <Section title='Jenjang' items={t.educationLevels} />
-              <Section title='Metode Mengajar' items={t.teachingMethods} />
+              <Section
+                title='Mata Pelajaran'
+                items={subjectLabels(t.subjects)}
+              />
+              <Section
+                title='Jenjang'
+                items={educationLevelLabels(t.educationLevels)}
+              />
+              <Section
+                title='Metode Mengajar'
+                items={teachingMethodLabels(t.teachingMethods)}
+              />
               <Section
                 title='Pengalaman'
                 text={
                   t.experience
                     ? `${t.experience} tahun`
-                    : t.educationBackground ?? '—'
+                    : (t.educationBackground ?? '—')
                 }
               />
             </div>
 
-            <Button
-              size='lg'
-              onClick={() => setOpen(true)}
-              className='w-full sm:w-auto'
-            >
-              Ajukan Belajar
-            </Button>
+            {existingApp ? (
+              <div className='border-primary-100 bg-primary-50/50 flex flex-col gap-1 rounded-lg border p-4 sm:flex-row sm:items-center sm:justify-between'>
+                <div className='text-sm'>
+                  <div className='font-semibold'>
+                    {existingApp.status === 'ACCEPTED'
+                      ? 'Sudah diterima oleh tutor'
+                      : 'Aplikasi sedang ditinjau'}
+                  </div>
+                  <div className='text-muted-foreground text-xs'>
+                    {existingApp.status === 'ACCEPTED'
+                      ? 'Lanjut ke Pesan Sesi untuk menjadwalkan.'
+                      : 'Tunggu tutor menerima aplikasi Anda.'}
+                  </div>
+                </div>
+                <Badge
+                  variant='secondary'
+                  className={
+                    existingApp.status === 'ACCEPTED'
+                      ? 'border border-emerald-200 bg-emerald-50 text-emerald-700'
+                      : 'border-primary-200 bg-primary-100 text-primary-800 border'
+                  }
+                >
+                  {existingApp.status === 'ACCEPTED' ? 'Diterima' : 'Menunggu'}
+                </Badge>
+              </div>
+            ) : (
+              <Button
+                size='lg'
+                onClick={() => setOpen(true)}
+                className='w-full sm:w-auto'
+                disabled={myAppsQ.isLoading}
+              >
+                Ajukan Belajar
+              </Button>
+            )}
           </CardContent>
         </Card>
       )}
@@ -142,7 +204,7 @@ function Section({
 }) {
   return (
     <div>
-      <div className='text-muted-foreground text-xs uppercase tracking-wide font-semibold mb-1.5'>
+      <div className='text-muted-foreground mb-1.5 text-xs font-semibold tracking-wide uppercase'>
         {title}
       </div>
       {items ? (
@@ -151,7 +213,7 @@ function Section({
             items.map((i) => (
               <Badge
                 key={i}
-                className='bg-primary-50 text-primary-700 border border-primary-100'
+                className='bg-primary-50 text-primary-700 border-primary-100 border'
               >
                 {i}
               </Badge>

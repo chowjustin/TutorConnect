@@ -1,8 +1,13 @@
 'use client';
 
-import * as React from 'react';
+import { useQuery } from '@tanstack/react-query';
+import { FormProvider, useFieldArray, useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { z } from 'zod';
 import { Plus, Trash2 } from 'lucide-react';
 
+import api from '@/lib/api';
+import useAuthStore from '@/store/use-auth-store';
 import { Button } from '@/components/ui/button';
 import {
   Card,
@@ -11,15 +16,12 @@ import {
   CardHeader,
   CardTitle,
 } from '@/components/ui/card';
-import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
+import { Skeleton } from '@/components/ui/skeleton';
+import { SelectField } from '@/components/form/select-field';
+import { TextField } from '@/components/form/text-field';
+import { notifyError } from '@/lib/toast';
+import { hhmmToMinutes, minutesToHHmm } from '@/lib/time';
 import { TIMEZONE } from '@/constant/common';
 
 import type { AvailabilitySlot, UpdateAvailabilityRequest } from './types';
@@ -35,49 +37,83 @@ const DAYS = [
   'Sabtu',
 ] as const;
 
-function hhmmToMinutes(s: string): number {
-  const [h, m] = s.split(':').map((v) => parseInt(v, 10) || 0);
-  return h * 60 + m;
-}
+const slotSchema = z.object({
+  dayOfWeek: z.string(),
+  start: z.string().regex(/^\d{2}:\d{2}$/, 'Format HH:MM'),
+  end: z.string().regex(/^\d{2}:\d{2}$/, 'Format HH:MM'),
+});
+const schema = z.object({ slots: z.array(slotSchema) });
+type AvailabilityForm = z.infer<typeof schema>;
 
-function minutesToHHmm(m: number): string {
-  const h = Math.floor(m / 60);
-  const mm = m % 60;
-  return `${String(h).padStart(2, '0')}:${String(mm).padStart(2, '0')}`;
+const DAY_OPTS = DAYS.map((d, idx) => ({ value: String(idx), label: d }));
+
+const DEFAULT_FORM: AvailabilityForm = {
+  slots: [
+    {
+      dayOfWeek: '1',
+      start: minutesToHHmm(9 * 60),
+      end: minutesToHHmm(11 * 60),
+    },
+  ],
+};
+
+function slotsToForm(
+  slots: AvailabilitySlot[] | undefined,
+): AvailabilityForm | undefined {
+  if (!slots) return undefined;
+  if (slots.length === 0) return DEFAULT_FORM;
+  return {
+    slots: slots.map((s) => ({
+      dayOfWeek: String(s.dayOfWeek),
+      start: minutesToHHmm(s.startMin),
+      end: minutesToHHmm(s.endMin),
+    })),
+  };
 }
 
 export default function AvailabilityPage() {
-  const [slots, setSlots] = React.useState<AvailabilitySlot[]>([
-    { dayOfWeek: 1, startMin: 9 * 60, endMin: 11 * 60, timezone: TIMEZONE },
-  ]);
-
+  const user = useAuthStore.useUser();
+  const tutorProfileId = user?.tutorProfileId;
   const update = useUpdateAvailability();
 
-  const addSlot = () =>
-    setSlots((s) => [
-      ...s,
-      { dayOfWeek: 1, startMin: 9 * 60, endMin: 10 * 60, timezone: TIMEZONE },
-    ]);
+  const existingQ = useQuery<AvailabilitySlot[]>({
+    queryKey: [`/tutors/${tutorProfileId}/availability`],
+    queryFn: async () => {
+      const res = await api.get(`/tutors/${tutorProfileId}/availability`);
+      return res.data;
+    },
+    enabled: !!tutorProfileId,
+  });
 
-  const removeSlot = (i: number) =>
-    setSlots((s) => s.filter((_, idx) => idx !== i));
+  const methods = useForm<AvailabilityForm>({
+    resolver: zodResolver(schema),
+    values: slotsToForm(existingQ.data),
+    resetOptions: { keepDirtyValues: true },
+    defaultValues: DEFAULT_FORM,
+  });
 
-  const updateSlot = (i: number, patch: Partial<AvailabilitySlot>) =>
-    setSlots((s) =>
-      s.map((slot, idx) => (idx === i ? { ...slot, ...patch } : slot)),
-    );
+  const { fields, append, remove } = useFieldArray({
+    control: methods.control,
+    name: 'slots',
+  });
 
-  const onSave = () => {
-    for (const s of slots) {
-      if (s.endMin <= s.startMin) {
-        return alert('Waktu selesai harus setelah waktu mulai');
+  const onSubmit = methods.handleSubmit((values) => {
+    for (const s of values.slots) {
+      if (hhmmToMinutes(s.end) <= hhmmToMinutes(s.start)) {
+        notifyError('Waktu selesai harus setelah waktu mulai');
+        return;
       }
     }
     const req: UpdateAvailabilityRequest = {
-      slots: slots.map(({ id: _id, ...rest }) => rest),
+      slots: values.slots.map((s) => ({
+        dayOfWeek: Number(s.dayOfWeek),
+        startMin: hhmmToMinutes(s.start),
+        endMin: hhmmToMinutes(s.end),
+        timezone: TIMEZONE,
+      })),
     };
     update.mutate(req);
-  };
+  });
 
   return (
     <div className='space-y-4'>
@@ -88,81 +124,71 @@ export default function AvailabilityPage() {
         </p>
       </div>
 
-      <Card>
-        <CardHeader>
-          <CardTitle>Slot Mingguan</CardTitle>
-          <CardDescription>
-            Zona waktu: <code>{TIMEZONE}</code>
-          </CardDescription>
-        </CardHeader>
-        <CardContent className='space-y-3'>
-          {slots.map((slot, i) => (
-            <div
-              key={i}
-              className='grid grid-cols-[1fr_auto_auto_auto] items-end gap-2'
-            >
-              <div className='space-y-1'>
-                <Label>Hari</Label>
-                <Select
-                  value={String(slot.dayOfWeek)}
-                  onValueChange={(v) => updateSlot(i, { dayOfWeek: Number(v) })}
+      <FormProvider {...methods}>
+        <form onSubmit={onSubmit} className='space-y-4'>
+          <Card>
+            <CardHeader>
+              <CardTitle>Slot Mingguan</CardTitle>
+              <CardDescription>
+                Zona waktu: <code>{TIMEZONE}</code>
+              </CardDescription>
+            </CardHeader>
+            <CardContent className='space-y-3'>
+              {fields.map((field, i) => (
+                <div
+                  key={field.id}
+                  className='grid grid-cols-[1fr_auto_auto_auto] items-end gap-2'
                 >
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {DAYS.map((d, idx) => (
-                      <SelectItem key={d} value={String(idx)}>
-                        {d}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className='space-y-1'>
-                <Label>Mulai</Label>
-                <Input
-                  type='time'
-                  value={minutesToHHmm(slot.startMin)}
-                  onChange={(e) =>
-                    updateSlot(i, {
-                      startMin: hhmmToMinutes(e.target.value),
-                    })
-                  }
-                />
-              </div>
-              <div className='space-y-1'>
-                <Label>Selesai</Label>
-                <Input
-                  type='time'
-                  value={minutesToHHmm(slot.endMin)}
-                  onChange={(e) =>
-                    updateSlot(i, {
-                      endMin: hhmmToMinutes(e.target.value),
-                    })
-                  }
-                />
-              </div>
+                  <SelectField<AvailabilityForm>
+                    name={`slots.${i}.dayOfWeek` as const}
+                    label='Hari'
+                    options={DAY_OPTS}
+                  />
+                  <TextField<AvailabilityForm>
+                    name={`slots.${i}.start` as const}
+                    label='Mulai'
+                    type='time'
+                  />
+                  <TextField<AvailabilityForm>
+                    name={`slots.${i}.end` as const}
+                    label='Selesai'
+                    type='time'
+                  />
+                  <div className='space-y-1'>
+                    <Label className='opacity-0'>x</Label>
+                    <Button
+                      type='button'
+                      variant='ghost'
+                      size='icon'
+                      aria-label='Hapus slot'
+                      onClick={() => remove(i)}
+                    >
+                      <Trash2 className='size-4' />
+                    </Button>
+                  </div>
+                </div>
+              ))}
               <Button
                 type='button'
-                variant='ghost'
-                size='icon'
-                aria-label='Hapus slot'
-                onClick={() => removeSlot(i)}
+                variant='outline'
+                onClick={() =>
+                  append({
+                    dayOfWeek: '1',
+                    start: minutesToHHmm(9 * 60),
+                    end: minutesToHHmm(10 * 60),
+                  })
+                }
               >
-                <Trash2 className='size-4' />
+                <Plus className='size-4' /> Tambah slot
               </Button>
-            </div>
-          ))}
-          <Button type='button' variant='outline' onClick={addSlot}>
-            <Plus className='size-4' /> Tambah slot
-          </Button>
-        </CardContent>
-      </Card>
+            </CardContent>
+          </Card>
 
-      <Button onClick={onSave} disabled={update.isPending}>
-        {update.isPending ? 'Menyimpan...' : 'Simpan jadwal'}
-      </Button>
+          <Button type='submit' disabled={update.isPending}>
+            {update.isPending ? 'Menyimpan...' : 'Simpan jadwal'}
+          </Button>
+        </form>
+      </FormProvider>
     </div>
   );
 }

@@ -20,7 +20,13 @@ export function useUpdateApplicationStatus() {
       return res.data;
     },
     onSuccess: () => {
-      qc.invalidateQueries({ queryKey: ['/applications/tutor'] });
+      qc.invalidateQueries({
+        predicate: (q) =>
+          typeof q.queryKey[0] === 'string' &&
+          ((q.queryKey[0] as string).startsWith('/applications') ||
+            (q.queryKey[0] as string).includes('/students') ||
+            (q.queryKey[0] as string).includes('/dashboards')),
+      });
       notifySuccess('Status diperbarui');
     },
     onError: (e) => notifyAxiosError(e, 'Gagal memperbarui status'),

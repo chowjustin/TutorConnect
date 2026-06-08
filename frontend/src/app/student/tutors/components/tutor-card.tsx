@@ -3,6 +3,7 @@ import { ShieldCheck, Star } from 'lucide-react';
 
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { formatRupiah } from '@/lib/format';
+import { subjectLabel } from '@/constant/enums';
 
 import type { TutorSearchItem } from '../types';
 
@@ -68,7 +69,7 @@ export function TutorCard({ tutor }: { tutor: TutorSearchItem }) {
             key={s}
             className='bg-primary-50 text-primary-800 border-primary-100 rounded-full border px-2 py-0.5 text-xs'
           >
-            {s}
+            {subjectLabel(s)}
           </span>
         ))}
         {tutor.subjects.length > 4 ? (

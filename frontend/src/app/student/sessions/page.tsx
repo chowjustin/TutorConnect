@@ -4,7 +4,10 @@ import * as React from 'react';
 import { useQuery } from '@tanstack/react-query';
 
 import api from '@/lib/api';
+import useAuthStore from '@/store/use-auth-store';
+import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { PaymentCheckoutModal } from '@/components/checkout/payment-checkout-modal';
 import {
   Table,
   TableBody,
@@ -16,12 +19,13 @@ import {
 import { Skeleton } from '@/components/ui/skeleton';
 import { StatusBadge } from '@/components/ui/status-badge';
 import { formatDateTimeId, formatRupiah } from '@/lib/format';
+import { classFormatLabel } from '@/constant/enums';
 import { usePagination } from '@/hooks/use-pagination';
 import { apiUrl } from '@/constant/env';
 import { getToken } from '@/lib/cookie';
 import type { PaginatedApiResponse } from '@/types/api';
 
-import { CalendarDays, Star } from 'lucide-react';
+import { CalendarDays, Star, Wallet } from 'lucide-react';
 import { PageHeader } from '@/components/ui/page-header';
 import { EmptyState } from '@/components/ui/empty-state';
 import { ReviewDialog } from './components/review-dialog';
@@ -31,6 +35,8 @@ import type { SessionItem } from './types';
 export default function StudentSessionsPage() {
   const { params } = usePagination();
   const [past, setPast] = React.useState(false);
+  const user = useAuthStore.useUser();
+  const studentProfileId = user?.studentProfileId;
 
   const { data, isLoading } = useQuery<{
     data: SessionItem[];
@@ -64,6 +70,11 @@ export default function StudentSessionsPage() {
     tutorId: string;
     tutorName?: string;
   } | null>(null);
+  const [payTarget, setPayTarget] = React.useState<{
+    attendeeId: string;
+    amount: number;
+    tutorName?: string;
+  } | null>(null);
 
   const empty = !isLoading && (data?.data.length ?? 0) === 0;
 
@@ -74,7 +85,11 @@ export default function StudentSessionsPage() {
         title='Sesi Saya'
         description={past ? 'Riwayat sesi belajar.' : 'Sesi mendatang.'}
         actions={
-          <Button variant='outline' size='sm' onClick={() => setPast((p) => !p)}>
+          <Button
+            variant='outline'
+            size='sm'
+            onClick={() => setPast((p) => !p)}
+          >
             {past ? 'Mendatang' : 'Riwayat'}
           </Button>
         }
@@ -105,41 +120,83 @@ export default function StudentSessionsPage() {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {data?.data.map((s) => (
-              <TableRow key={s.id}>
-                <TableCell>{s.tutor?.user.name ?? '—'}</TableCell>
-                <TableCell>{formatDateTimeId(s.startsAt)}</TableCell>
-                <TableCell>{s.format}</TableCell>
-                <TableCell>
-                  <StatusBadge kind='session' status={s.status} />
-                </TableCell>
-                <TableCell className='mono'>{formatRupiah(s.pricePerSeat)}</TableCell>
-                <TableCell>
-                  <div className='flex gap-1'>
-                    <Button
-                      size='sm'
-                      variant='outline'
-                      onClick={() => downloadIcal(s.id)}
-                    >
-                      iCal
-                    </Button>
-                    {s.status === 'COMPLETED' ? (
+            {data?.data.map((s) => {
+              const myAttendee = s.attendees?.find(
+                (a) => a.studentId === studentProfileId,
+              );
+              const unpaid = myAttendee && !myAttendee.paymentId;
+              return (
+                <TableRow key={s.id}>
+                  <TableCell>{s.tutor?.user.name ?? '—'}</TableCell>
+                  <TableCell>{formatDateTimeId(s.startsAt)}</TableCell>
+                  <TableCell>{classFormatLabel(s.format)}</TableCell>
+                  <TableCell>
+                    <div className='flex items-center gap-2'>
+                      <StatusBadge kind='session' status={s.status} />
+                      {myAttendee ? (
+                        unpaid ? (
+                          <Badge
+                            variant='secondary'
+                            className='border border-amber-200 bg-amber-50 text-amber-700'
+                          >
+                            Belum Bayar
+                          </Badge>
+                        ) : (
+                          <Badge
+                            variant='secondary'
+                            className='border border-emerald-200 bg-emerald-50 text-emerald-700'
+                          >
+                            Lunas
+                          </Badge>
+                        )
+                      ) : null}
+                    </div>
+                  </TableCell>
+                  <TableCell className='mono'>
+                    {formatRupiah(s.pricePerSeat)}
+                  </TableCell>
+                  <TableCell>
+                    <div className='flex gap-2'>
+                      {unpaid && myAttendee ? (
+                        <Button
+                          size='sm'
+                          onClick={() =>
+                            setPayTarget({
+                              attendeeId: myAttendee.id,
+                              amount: s.pricePerSeat,
+                              tutorName: s.tutor?.user.name,
+                            })
+                          }
+                        >
+                          <Wallet className='size-3.5' /> Bayar
+                        </Button>
+                      ) : null}
                       <Button
                         size='sm'
-                        onClick={() =>
-                          setReviewTarget({
-                            tutorId: s.tutorId,
-                            tutorName: s.tutor?.user.name,
-                          })
-                        }
+                        variant='outline'
+                        onClick={() => downloadIcal(s.id)}
                       >
-                        <Star className='size-3.5' /> Ulasan
+                        iCal
                       </Button>
-                    ) : null}
-                  </div>
-                </TableCell>
-              </TableRow>
-            ))}
+                      {s.status === 'COMPLETED' ? (
+                        <Button
+                          size='sm'
+                          variant='secondary'
+                          onClick={() =>
+                            setReviewTarget({
+                              tutorId: s.tutorId,
+                              tutorName: s.tutor?.user.name,
+                            })
+                          }
+                        >
+                          <Star className='size-3.5' /> Ulasan
+                        </Button>
+                      ) : null}
+                    </div>
+                  </TableCell>
+                </TableRow>
+              );
+            })}
           </TableBody>
         </Table>
       )}
@@ -149,6 +206,25 @@ export default function StudentSessionsPage() {
         onOpenChange={(v) => !v && setReviewTarget(null)}
         tutorId={reviewTarget?.tutorId ?? ''}
         tutorName={reviewTarget?.tutorName}
+      />
+
+      <PaymentCheckoutModal
+        open={!!payTarget}
+        onOpenChange={(v) => !v && setPayTarget(null)}
+        kind='SESSION'
+        title='Bayar Sesi'
+        description={
+          payTarget?.tutorName
+            ? `Sesi dengan ${payTarget.tutorName}`
+            : undefined
+        }
+        amount={payTarget?.amount}
+        previewRefId={payTarget?.attendeeId}
+        invalidate={[['/sessions/student']]}
+        createIntent={async () => ({
+          refId: payTarget?.attendeeId ?? '',
+          amount: payTarget?.amount ?? 0,
+        })}
       />
     </div>
   );

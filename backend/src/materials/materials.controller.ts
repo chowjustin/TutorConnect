@@ -52,6 +52,10 @@ export class MaterialsController {
     @UploadedFile() file: Express.Multer.File,
     @Req() req: AuthedRequest,
     @Body('allowedStudents') allowedStudents: string | string[],
+    @Body('subject') subject?: Subject,
+    @Body('level') level?: EducationLevel,
+    @Body('kind') kind?: MaterialKind,
+    @Body('description') description?: string,
   ) {
     const studentsArray = Array.isArray(allowedStudents)
       ? allowedStudents
@@ -63,6 +67,7 @@ export class MaterialsController {
       file,
       req.user.sub,
       studentsArray,
+      { subject, level, kind, description },
     );
   }
 

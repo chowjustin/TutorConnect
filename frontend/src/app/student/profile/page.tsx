@@ -1,6 +1,5 @@
 'use client';
 
-import * as React from 'react';
 import { FormProvider, useForm, type Resolver } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 
@@ -13,7 +12,20 @@ import { SUBJECT_OPTIONS } from '@/constant/enums';
 import { useStudentProfile } from './hooks/query';
 import { useUpdateStudentProfile } from './hooks/mutation';
 import { studentProfileFormSchema } from './schema';
-import type { StudentProfileForm, UpdateStudentRequest } from './types';
+import type {
+  StudentProfile,
+  StudentProfileForm,
+  UpdateStudentRequest,
+} from './types';
+
+function profileToForm(p: StudentProfile | undefined): StudentProfileForm {
+  return {
+    bio: p?.bio ?? '',
+    school: p?.school ?? '',
+    whatsappNumber: p?.whatsappNumber ?? '',
+    interests: p?.interests ?? [],
+  };
+}
 
 export default function StudentProfilePage() {
   const profileQ = useStudentProfile();
@@ -24,24 +36,12 @@ export default function StudentProfilePage() {
     resolver: zodResolver(
       studentProfileFormSchema as any,
     ) as Resolver<StudentProfileForm>,
-    defaultValues: {
-      bio: '',
-      school: '',
-      whatsappNumber: '',
-      interests: [],
-    },
+    values: profileQ.data?.profile
+      ? profileToForm(profileQ.data.profile)
+      : undefined,
+    resetOptions: { keepDirtyValues: true },
+    defaultValues: profileToForm(undefined),
   });
-
-  React.useEffect(() => {
-    const p = profileQ.data?.profile;
-    if (!p) return;
-    methods.reset({
-      bio: p.bio ?? '',
-      school: p.school ?? '',
-      whatsappNumber: p.whatsappNumber ?? '',
-      interests: p.interests ?? [],
-    });
-  }, [profileQ.data, methods]);
 
   const onSubmit = methods.handleSubmit((values) => {
     const req: UpdateStudentRequest = {

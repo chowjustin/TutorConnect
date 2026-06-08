@@ -5,6 +5,7 @@ import { FormProvider, useForm, type Resolver } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 
 import { Button } from '@/components/ui/button';
+import { notifyError } from '@/lib/toast';
 import { TextField } from '@/components/form/text-field';
 import { TextareaField } from '@/components/form/textarea-field';
 import { MultiToggleField } from '@/components/form/multi-toggle-field';
@@ -21,6 +22,7 @@ import type {
   UpdateTutorRequest,
 } from './types';
 import { useUpdateTutorProfile } from './hooks/mutation';
+import { logger } from '@/lib/logger';
 
 interface Props {
   profile: TutorProfile | undefined;
@@ -53,64 +55,62 @@ function FormSection({
   );
 }
 
+function profileToForm(profile: TutorProfile | undefined): TutorProfileForm {
+  return {
+    bio: profile?.bio ?? '',
+    hourlyRate: profile?.hourlyRate?.toString() ?? '',
+    whatsappNumber: profile?.whatsappNumber ?? '',
+    educationBackground: profile?.educationBackground ?? '',
+    experience: profile?.experience?.toString() ?? '',
+    introVideoUrl: profile?.introVideoUrl ?? '',
+    bankName: profile?.bankName ?? '',
+    bankAccountNumber: profile?.bankAccountNumber ?? '',
+    bankAccountHolder: profile?.bankAccountHolder ?? '',
+    subjects: profile?.subjects ?? [],
+    educationLevels: profile?.educationLevels ?? [],
+    teachingMethods: profile?.teachingMethods ?? [],
+  };
+}
+
 export function TutorProfileFormView({ profile }: Props) {
   const methods = useForm<TutorProfileForm>({
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     resolver: zodResolver(
       tutorProfileFormSchema as any,
     ) as Resolver<TutorProfileForm>,
-    defaultValues: {
-      bio: '',
-      hourlyRate: '',
-      whatsappNumber: '',
-      educationBackground: '',
-      experience: '',
-      introVideoUrl: '',
-      bankName: '',
-      bankAccountNumber: '',
-      bankAccountHolder: '',
-      subjects: [],
-      educationLevels: [],
-      teachingMethods: [],
-    },
+    values: profile ? profileToForm(profile) : undefined,
+    resetOptions: { keepDirtyValues: true },
+    defaultValues: profileToForm(undefined),
   });
-
-  React.useEffect(() => {
-    if (!profile) return;
-    methods.reset({
-      bio: profile.bio ?? '',
-      hourlyRate: profile.hourlyRate?.toString() ?? '',
-      whatsappNumber: profile.whatsappNumber ?? '',
-      educationBackground: profile.educationBackground ?? '',
-      experience: profile.experience?.toString() ?? '',
-      introVideoUrl: profile.introVideoUrl ?? '',
-      bankName: profile.bankName ?? '',
-      bankAccountNumber: profile.bankAccountNumber ?? '',
-      bankAccountHolder: profile.bankAccountHolder ?? '',
-      subjects: profile.subjects ?? [],
-      educationLevels: profile.educationLevels ?? [],
-      teachingMethods: profile.teachingMethods ?? [],
-    });
-  }, [profile, methods]);
 
   const update = useUpdateTutorProfile(profile?.id);
 
-  const onSubmit = methods.handleSubmit((values) => {
-    const req: UpdateTutorRequest = {
-      bio: values.bio || undefined,
-      hourlyRate: values.hourlyRate ? Number(values.hourlyRate) : undefined,
-      whatsappNumber: values.whatsappNumber || undefined,
-      educationBackground: values.educationBackground || undefined,
-      introVideoUrl: values.introVideoUrl || undefined,
-      bankName: values.bankName || undefined,
-      bankAccountNumber: values.bankAccountNumber || undefined,
-      bankAccountHolder: values.bankAccountHolder || undefined,
-      subjects: values.subjects,
-      educationLevels: values.educationLevels,
-      teachingMethods: values.teachingMethods,
-    };
-    update.mutate(req);
-  });
+  const onSubmit = methods.handleSubmit(
+    (values) => {
+      const req: UpdateTutorRequest = {
+        bio: values.bio || undefined,
+        experience: values.experience ? Number(values.experience) : undefined,
+        hourlyRate: values.hourlyRate ? Number(values.hourlyRate) : undefined,
+        whatsappNumber: values.whatsappNumber || undefined,
+        educationBackground: values.educationBackground || undefined,
+        introVideoUrl: values.introVideoUrl || undefined,
+        bankName: values.bankName || undefined,
+        bankAccountNumber: values.bankAccountNumber || undefined,
+        bankAccountHolder: values.bankAccountHolder || undefined,
+        subjects: values.subjects,
+        educationLevels: values.educationLevels,
+        teachingMethods: values.teachingMethods,
+      };
+      logger({ req });
+      update.mutate(req);
+    },
+    (errors) => {
+      const first = Object.values(errors)[0] as
+        | { message?: string }
+        | undefined;
+      notifyError(first?.message ?? 'Periksa kembali isian form');
+    },
+  );
 
   return (
     <FormProvider {...methods}>

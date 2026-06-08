@@ -1,9 +1,11 @@
 'use client';
 
+import * as React from 'react';
 import { useQuery } from '@tanstack/react-query';
 
 import api from '@/lib/api';
 import { Button } from '@/components/ui/button';
+import { ConfirmDialog } from '@/components/ui/confirm-dialog';
 import {
   Table,
   TableBody,
@@ -32,6 +34,14 @@ interface ApplicationRow {
 export default function TutorApplicationsPage() {
   const { params } = usePagination();
   const updateStatus = useUpdateApplicationStatus();
+  const [acceptTarget, setAcceptTarget] = React.useState<{
+    id: string;
+    name: string;
+  } | null>(null);
+  const [rejectTarget, setRejectTarget] = React.useState<{
+    id: string;
+    name: string;
+  } | null>(null);
 
   const { data, isLoading } = useQuery<{
     data: ApplicationRow[];
@@ -83,9 +93,9 @@ export default function TutorApplicationsPage() {
                         <Button
                           size='sm'
                           onClick={() =>
-                            updateStatus.mutate({
+                            setAcceptTarget({
                               id: app.id,
-                              status: 'ACCEPTED',
+                              name: app.student.user.name,
                             })
                           }
                         >
@@ -95,9 +105,9 @@ export default function TutorApplicationsPage() {
                           size='sm'
                           variant='destructive'
                           onClick={() =>
-                            updateStatus.mutate({
+                            setRejectTarget({
                               id: app.id,
-                              status: 'REJECTED',
+                              name: app.student.user.name,
                             })
                           }
                         >
@@ -112,6 +122,47 @@ export default function TutorApplicationsPage() {
           </TableBody>
         </Table>
       )}
+
+      <ConfirmDialog
+        open={!!acceptTarget}
+        onOpenChange={(v) => !v && setAcceptTarget(null)}
+        title='Terima aplikasi siswa?'
+        description={
+          acceptTarget
+            ? `${acceptTarget.name} akan dapat memesan sesi dengan Anda.`
+            : undefined
+        }
+        confirmLabel='Ya, terima'
+        loading={updateStatus.isPending}
+        onConfirm={() => {
+          if (!acceptTarget) return;
+          updateStatus.mutate(
+            { id: acceptTarget.id, status: 'ACCEPTED' },
+            { onSuccess: () => setAcceptTarget(null) },
+          );
+        }}
+      />
+
+      <ConfirmDialog
+        open={!!rejectTarget}
+        onOpenChange={(v) => !v && setRejectTarget(null)}
+        tone='danger'
+        title='Tolak aplikasi siswa?'
+        description={
+          rejectTarget
+            ? `${rejectTarget.name} akan diberi tahu aplikasi ditolak.`
+            : undefined
+        }
+        confirmLabel='Tolak'
+        loading={updateStatus.isPending}
+        onConfirm={() => {
+          if (!rejectTarget) return;
+          updateStatus.mutate(
+            { id: rejectTarget.id, status: 'REJECTED' },
+            { onSuccess: () => setRejectTarget(null) },
+          );
+        }}
+      />
     </div>
   );
 }

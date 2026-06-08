@@ -37,6 +37,12 @@ export class MaterialsService {
     file: Express.Multer.File,
     tutorUserId: string,
     studentProfileIds: string[],
+    meta?: {
+      subject?: Subject;
+      level?: EducationLevel;
+      kind?: MaterialKind;
+      description?: string;
+    },
   ) {
     if (!file) throw new BadRequestException('File is missing');
 
@@ -64,6 +70,10 @@ export class MaterialsService {
         title: file.originalname,
         fileUrl: key,
         tutorId: tutor.id,
+        ...(meta?.subject ? { subject: meta.subject } : {}),
+        ...(meta?.level ? { level: meta.level } : {}),
+        ...(meta?.kind ? { kind: meta.kind } : {}),
+        ...(meta?.description ? { description: meta.description } : {}),
       },
     });
 

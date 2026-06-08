@@ -19,6 +19,7 @@ import { StatusBadge } from '@/components/ui/status-badge';
 import { PageHeader } from '@/components/ui/page-header';
 import { EmptyState } from '@/components/ui/empty-state';
 import { formatDateTimeId } from '@/lib/format';
+import { classFormatLabel } from '@/constant/enums';
 import { usePagination } from '@/hooks/use-pagination';
 import type { PaginatedApiResponse } from '@/types/api';
 import type { SessionItem } from '@/app/student/sessions/types';
@@ -88,7 +89,7 @@ export default function TutorSessionsPage() {
                   <TableCell className='mono text-xs tabular-nums'>
                     {formatDateTimeId(s.startsAt)}
                   </TableCell>
-                  <TableCell>{s.format}</TableCell>
+                  <TableCell>{classFormatLabel(s.format)}</TableCell>
                   <TableCell className='mono text-right tabular-nums'>
                     {s.attendees?.length ?? 0}
                   </TableCell>

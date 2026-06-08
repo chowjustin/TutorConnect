@@ -1,15 +1,17 @@
 'use client';
 
-import * as React from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { FormProvider, useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { z } from 'zod';
 
 import api from '@/lib/api';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
+import { TextField } from '@/components/form/text-field';
 import { notifyAxiosError, notifySuccess } from '@/lib/toast';
 
 interface BankRow {
@@ -21,28 +23,39 @@ interface BankRow {
   notes: string | null;
 }
 
+const schema = z.object({
+  bankName: z.string().min(1, 'Wajib diisi'),
+  accountNumber: z.string().min(1, 'Wajib diisi'),
+  accountHolder: z.string().min(1, 'Wajib diisi'),
+  notes: z.string().optional().or(z.literal('')),
+});
+type BankForm = z.infer<typeof schema>;
+
 export default function AdminPlatformBankPage() {
   const qc = useQueryClient();
   const { data, isLoading } = useQuery<BankRow[]>({
     queryKey: ['/admin/platform-bank'],
   });
 
-  const [form, setForm] = React.useState({
-    bankName: '',
-    accountNumber: '',
-    accountHolder: '',
-    notes: '',
+  const methods = useForm<BankForm>({
+    resolver: zodResolver(schema),
+    defaultValues: {
+      bankName: '',
+      accountNumber: '',
+      accountHolder: '',
+      notes: '',
+    },
   });
 
   const create = useMutation({
-    mutationFn: async (body: typeof form) => {
+    mutationFn: async (body: BankForm) => {
       const res = await api.post('/admin/platform-bank', body);
       return res.data;
     },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['/admin/platform-bank'] });
       notifySuccess('Rekening ditambahkan');
-      setForm({ bankName: '', accountNumber: '', accountHolder: '', notes: '' });
+      methods.reset();
     },
     onError: (e) => notifyAxiosError(e),
   });
@@ -58,6 +71,8 @@ export default function AdminPlatformBankPage() {
     onError: (e) => notifyAxiosError(e),
   });
 
+  const onSubmit = methods.handleSubmit((values) => create.mutate(values));
+
   return (
     <div className='space-y-4'>
       <h1 className='h2'>Rekening Platform</h1>
@@ -66,47 +81,20 @@ export default function AdminPlatformBankPage() {
         <CardHeader>
           <CardTitle>Tambah Rekening</CardTitle>
         </CardHeader>
-        <CardContent className='grid gap-3 sm:grid-cols-2'>
-          <div className='space-y-1.5'>
-            <Label>Nama Bank</Label>
-            <Input
-              value={form.bankName}
-              onChange={(e) => setForm({ ...form, bankName: e.target.value })}
-            />
-          </div>
-          <div className='space-y-1.5'>
-            <Label>No Rekening</Label>
-            <Input
-              value={form.accountNumber}
-              onChange={(e) =>
-                setForm({ ...form, accountNumber: e.target.value })
-              }
-            />
-          </div>
-          <div className='space-y-1.5'>
-            <Label>Atas Nama</Label>
-            <Input
-              value={form.accountHolder}
-              onChange={(e) =>
-                setForm({ ...form, accountHolder: e.target.value })
-              }
-            />
-          </div>
-          <div className='space-y-1.5'>
-            <Label>Catatan</Label>
-            <Input
-              value={form.notes}
-              onChange={(e) => setForm({ ...form, notes: e.target.value })}
-            />
-          </div>
-          <div className='sm:col-span-2'>
-            <Button
-              onClick={() => create.mutate(form)}
-              disabled={create.isPending || !form.bankName}
-            >
-              Tambah
-            </Button>
-          </div>
+        <CardContent>
+          <FormProvider {...methods}>
+            <form onSubmit={onSubmit} className='grid gap-3 sm:grid-cols-2'>
+              <TextField<BankForm> name='bankName' label='Nama Bank' />
+              <TextField<BankForm> name='accountNumber' label='No Rekening' />
+              <TextField<BankForm> name='accountHolder' label='Atas Nama' />
+              <TextField<BankForm> name='notes' label='Catatan' />
+              <div className='sm:col-span-2'>
+                <Button type='submit' disabled={create.isPending}>
+                  Tambah
+                </Button>
+              </div>
+            </form>
+          </FormProvider>
         </CardContent>
       </Card>
 

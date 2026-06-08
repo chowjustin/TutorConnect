@@ -126,7 +126,7 @@ api.interceptors.response.use(
           code: number;
           message: string;
           data: { access_token: string; refresh_token: string };
-        }>(`${BASE}/auth/refresh`, { refresh_token: refresh });
+        }>(`${BASE}/auth/refresh`, { refreshToken: refresh });
         const { access_token, refresh_token } = res.data.data;
         setToken(access_token);
         setRefreshToken(refresh_token);

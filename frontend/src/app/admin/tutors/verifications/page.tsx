@@ -18,6 +18,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { PageHeader } from '@/components/ui/page-header';
 import { EmptyState } from '@/components/ui/empty-state';
 import { ImageLightbox } from '@/components/ui/image-lightbox';
+import { ConfirmDialog } from '@/components/ui/confirm-dialog';
 import { resolveFileUrl } from '@/lib/file-url';
 import { usePagination } from '@/hooks/use-pagination';
 import { notifyAxiosError, notifySuccess } from '@/lib/toast';
@@ -37,6 +38,8 @@ export default function AdminVerificationsPage() {
 
   const [slides, setSlides] = React.useState<{ src: string }[]>([]);
   const [open, setOpen] = React.useState(false);
+  const [approveTarget, setApproveTarget] = React.useState<string | null>(null);
+  const [rejectTarget, setRejectTarget] = React.useState<string | null>(null);
 
   const { data, isLoading } = useQuery<{
     data: VerificationItem[];
@@ -135,26 +138,13 @@ export default function AdminVerificationsPage() {
                 </TableCell>
                 <TableCell>
                   <div className='flex gap-2'>
-                    <Button
-                      size='sm'
-                      onClick={() =>
-                        review.mutate({ id: v.id, status: 'VERIFIED' })
-                      }
-                      disabled={review.isPending}
-                    >
+                    <Button size='sm' onClick={() => setApproveTarget(v.id)}>
                       Setujui
                     </Button>
                     <Button
                       size='sm'
                       variant='destructive'
-                      onClick={() =>
-                        review.mutate({
-                          id: v.id,
-                          status: 'REJECTED',
-                          notes: prompt('Alasan?') ?? undefined,
-                        })
-                      }
-                      disabled={review.isPending}
+                      onClick={() => setRejectTarget(v.id)}
                     >
                       Tolak
                     </Button>
@@ -166,7 +156,47 @@ export default function AdminVerificationsPage() {
         </Table>
       )}
 
-      <ImageLightbox open={open} onClose={() => setOpen(false)} slides={slides} />
+      <ImageLightbox
+        open={open}
+        onClose={() => setOpen(false)}
+        slides={slides}
+      />
+
+      <ConfirmDialog
+        open={!!approveTarget}
+        onOpenChange={(v) => !v && setApproveTarget(null)}
+        title='Setujui verifikasi tutor?'
+        description='Tutor akan dapat mempublikasikan profil dan menerima siswa.'
+        confirmLabel='Ya, setujui'
+        loading={review.isPending}
+        onConfirm={() => {
+          if (!approveTarget) return;
+          review.mutate(
+            { id: approveTarget, status: 'VERIFIED' },
+            { onSuccess: () => setApproveTarget(null) },
+          );
+        }}
+      />
+
+      <ConfirmDialog
+        open={!!rejectTarget}
+        onOpenChange={(v) => !v && setRejectTarget(null)}
+        tone='danger'
+        title='Tolak verifikasi tutor?'
+        description='Tutor diberi tahu alasan penolakan dan dapat unggah ulang dokumen.'
+        confirmLabel='Tolak'
+        noteLabel='Alasan penolakan'
+        notePlaceholder='Misal: KTP tidak jelas, ijazah tidak terbaca...'
+        noteRequired
+        loading={review.isPending}
+        onConfirm={(note) => {
+          if (!rejectTarget) return;
+          review.mutate(
+            { id: rejectTarget, status: 'REJECTED', notes: note },
+            { onSuccess: () => setRejectTarget(null) },
+          );
+        }}
+      />
     </div>
   );
 }

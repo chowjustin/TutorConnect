@@ -19,6 +19,11 @@ export class CreateTutorDto {
   @IsString()
   bio?: string;
 
+  @IsOptional()
+  @IsNumber({}, { message: 'experience must be a number' })
+  @Type(() => Number)
+  experience?: number;
+
   @IsNumber({}, { message: 'hourlyRate must be a number' })
   @Type(() => Number)
   hourlyRate: number;

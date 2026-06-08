@@ -14,6 +14,7 @@ import {
 } from '@/components/ui/table';
 import { Skeleton } from '@/components/ui/skeleton';
 import { formatDateTimeId, formatRupiah } from '@/lib/format';
+import { ledgerReasonLabel } from '@/constant/enums';
 
 interface WalletResponse {
   wallet: {
@@ -68,14 +69,14 @@ export default function WalletPage() {
                 <TableRow>
                   <TableHead>Tanggal</TableHead>
                   <TableHead>Alasan</TableHead>
-                  <TableHead className='text-right'>Delta</TableHead>
+                  <TableHead className='text-right'>Jumlah</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {data?.ledger.map((l) => (
                   <TableRow key={l.id}>
                     <TableCell>{formatDateTimeId(l.createdAt)}</TableCell>
-                    <TableCell>{l.reason}</TableCell>
+                    <TableCell>{ledgerReasonLabel(l.reason)}</TableCell>
                     <TableCell
                       className={`text-right font-mono ${l.delta >= 0 ? 'text-emerald-700' : 'text-destructive'}`}
                     >

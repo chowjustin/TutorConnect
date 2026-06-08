@@ -15,7 +15,11 @@ export function useUpdateAvailability() {
       return res.data;
     },
     onSuccess: () => {
-      qc.invalidateQueries({ queryKey: ['/tutors/availability'] });
+      qc.invalidateQueries({
+        predicate: (q) =>
+          typeof q.queryKey[0] === 'string' &&
+          (q.queryKey[0] as string).includes('/availability'),
+      });
       notifySuccess('Jadwal tersimpan');
     },
     onError: (e) => notifyAxiosError(e),

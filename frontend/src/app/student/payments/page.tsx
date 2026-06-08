@@ -17,6 +17,7 @@ import { StatusBadge } from '@/components/ui/status-badge';
 import { PageHeader } from '@/components/ui/page-header';
 import { EmptyState } from '@/components/ui/empty-state';
 import { formatDateTimeId, formatRupiah } from '@/lib/format';
+import { paymentKindLabel } from '@/constant/enums';
 import { usePagination } from '@/hooks/use-pagination';
 import type { PaginatedApiResponse } from '@/types/api';
 
@@ -110,7 +111,7 @@ export default function StudentPaymentsPage() {
                     <TableCell className='mono text-muted-foreground text-xs tabular-nums'>
                       {formatDateTimeId(p.createdAt)}
                     </TableCell>
-                    <TableCell>{p.kind}</TableCell>
+                    <TableCell>{paymentKindLabel(p.kind)}</TableCell>
                     <TableCell className='mono text-right tabular-nums'>
                       {formatRupiah(p.netAmount)}
                     </TableCell>

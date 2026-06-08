@@ -106,6 +106,7 @@ export function SubscriptionCard({ tier, description, price, perks }: Props) {
         }
         description='Aktif 30 hari setelah pembayaran dikonfirmasi.'
         amount={price}
+        previewRefId={tier}
         invalidate={[['/subscription/me']]}
         createIntent={async () => {
           const res = await api.post<{ refId: string; amount: number }>(
