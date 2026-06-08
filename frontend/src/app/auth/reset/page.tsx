@@ -54,32 +54,41 @@ function ResetPage() {
   });
 
   return (
-    <div className='space-y-5'>
-      <div className='space-y-1 text-center'>
-        <h1 className='h3'>Reset Password</h1>
+    <div className='space-y-8'>
+      <div className='space-y-2'>
+        <h1 className='text-3xl font-semibold tracking-[-0.025em] md:text-4xl'>
+          Atur password baru.
+        </h1>
         <p className='text-muted-foreground text-sm'>
-          Masukkan password baru Anda.
+          Pilih password yang kuat. Minimal 8 karakter.
         </p>
       </div>
       {!token ? (
-        <p className='text-destructive text-center text-sm'>
-          Token tidak ditemukan di URL.
-        </p>
+        <div className='rounded-lg border border-rose-200 bg-rose-50 p-4 text-sm text-rose-800'>
+          Tautan reset tidak valid. Token tidak ditemukan di URL.
+        </div>
       ) : (
         <FormProvider {...methods}>
-          <form onSubmit={onSubmit} className='space-y-4'>
+          <form onSubmit={onSubmit} className='space-y-5'>
             <TextField<ResetForm>
               name='password'
               label='Password baru'
               type='password'
+              placeholder='Min 8 karakter'
             />
             <TextField<ResetForm>
               name='passwordConfirm'
               label='Konfirmasi password'
               type='password'
+              placeholder='Ulangi password'
             />
-            <Button type='submit' className='w-full' disabled={isPending}>
-              {isPending ? 'Menyimpan...' : 'Reset'}
+            <Button
+              type='submit'
+              size='lg'
+              className='w-full'
+              disabled={isPending}
+            >
+              {isPending ? 'Menyimpan...' : 'Simpan password baru'}
             </Button>
           </form>
         </FormProvider>

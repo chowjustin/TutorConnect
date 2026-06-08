@@ -41,29 +41,41 @@ function ForgotPage() {
   });
 
   return (
-    <div className='space-y-5'>
-      <div className='space-y-1 text-center'>
-        <h1 className='h3'>Lupa Password</h1>
+    <div className='space-y-8'>
+      <div className='space-y-2'>
+        <h1 className='text-3xl font-semibold tracking-[-0.025em] md:text-4xl'>
+          Reset password Anda.
+        </h1>
         <p className='text-muted-foreground text-sm'>
-          Masukkan email Anda untuk menerima tautan reset.
+          Masukkan email akun Anda. Kami akan kirim tautan reset password ke
+          inbox.
         </p>
       </div>
       <FormProvider {...methods}>
-        <form onSubmit={onSubmit} className='space-y-4'>
+        <form onSubmit={onSubmit} className='space-y-5'>
           <TextField<ForgotForm>
             name='email'
-            label='Email'
+            label='Email akun'
             type='email'
             placeholder='you@example.com'
           />
-          <Button type='submit' className='w-full' disabled={isPending}>
-            {isPending ? 'Mengirim...' : 'Kirim tautan'}
+          <Button
+            type='submit'
+            size='lg'
+            className='w-full'
+            disabled={isPending}
+          >
+            {isPending ? 'Mengirim...' : 'Kirim tautan reset'}
           </Button>
         </form>
       </FormProvider>
-      <p className='text-muted-foreground text-center text-sm'>
-        <Link href='/auth/login' className='text-primary hover:underline'>
-          Kembali ke login
+      <p className='text-muted-foreground text-sm'>
+        Ingat password Anda?{' '}
+        <Link
+          href='/auth/login'
+          className='text-primary-700 hover:text-primary-900 font-medium underline-offset-4 hover:underline'
+        >
+          Kembali ke masuk
         </Link>
       </p>
     </div>

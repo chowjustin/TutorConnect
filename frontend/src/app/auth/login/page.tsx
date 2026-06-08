@@ -60,18 +60,23 @@ function LoginPage() {
   });
 
   return (
-    <div className='space-y-5'>
-      <div className='space-y-1 text-center'>
-        <h1 className='h3'>Masuk</h1>
+    <div className='space-y-8'>
+      <div className='space-y-2'>
+        <h1 className='text-3xl font-semibold tracking-[-0.025em] md:text-4xl'>
+          Selamat datang kembali.
+        </h1>
         <p className='text-muted-foreground text-sm'>
           Belum punya akun?{' '}
-          <Link href='/auth/register' className='text-primary hover:underline'>
-            Daftar
+          <Link
+            href='/auth/register'
+            className='text-primary-700 hover:text-primary-900 font-medium underline-offset-4 hover:underline'
+          >
+            Daftar gratis
           </Link>
         </p>
       </div>
       <FormProvider {...methods}>
-        <form onSubmit={onSubmit} className='space-y-4'>
+        <form onSubmit={onSubmit} className='space-y-5'>
           <TextField<LoginForm>
             name='email'
             label='Email'
@@ -79,26 +84,50 @@ function LoginPage() {
             autoComplete='email'
             placeholder='you@example.com'
           />
-          <TextField<LoginForm>
-            name='password'
-            label='Password'
-            type='password'
-            autoComplete='current-password'
-            placeholder='••••••••'
-          />
-          <div className='text-right text-sm'>
-            <Link
-              href='/auth/forgot'
-              className='text-primary hover:underline'
-            >
-              Lupa password?
-            </Link>
+          <div className='space-y-1.5'>
+            <TextField<LoginForm>
+              name='password'
+              label='Password'
+              type='password'
+              autoComplete='current-password'
+              placeholder='••••••••'
+            />
+            <div className='text-right'>
+              <Link
+                href='/auth/forgot'
+                className='text-muted-foreground hover:text-foreground text-xs'
+              >
+                Lupa password?
+              </Link>
+            </div>
           </div>
-          <Button type='submit' className='w-full' disabled={isPending}>
+          <Button
+            type='submit'
+            size='lg'
+            className='w-full gap-1.5'
+            disabled={isPending}
+          >
             {isPending ? 'Memuat...' : 'Masuk'}
           </Button>
         </form>
       </FormProvider>
+      <p className='text-muted-foreground text-center text-xs'>
+        Dengan masuk, Anda menyetujui{' '}
+        <Link
+          href='/legal/terms'
+          className='hover:text-foreground underline-offset-4 hover:underline'
+        >
+          Syarat Layanan
+        </Link>{' '}
+        dan{' '}
+        <Link
+          href='/legal/privacy'
+          className='hover:text-foreground underline-offset-4 hover:underline'
+        >
+          Kebijakan Privasi
+        </Link>
+        .
+      </p>
     </div>
   );
 }

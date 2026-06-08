@@ -63,12 +63,23 @@ function StudentRegisterPage() {
   });
 
   return (
-    <div className='space-y-5'>
-      <div className='space-y-1 text-center'>
-        <h1 className='h3'>Daftar sebagai Siswa</h1>
+    <div className='space-y-7'>
+      <div className='space-y-2'>
+        <Link
+          href='/auth/register'
+          className='text-muted-foreground hover:text-foreground -ml-1 inline-flex items-center gap-1 text-xs'
+        >
+          ← Ubah peran
+        </Link>
+        <h1 className='text-3xl font-semibold tracking-[-0.025em] md:text-4xl'>
+          Daftar sebagai siswa.
+        </h1>
         <p className='text-muted-foreground text-sm'>
           Sudah punya akun?{' '}
-          <Link href='/auth/login' className='text-primary hover:underline'>
+          <Link
+            href='/auth/login'
+            className='text-primary-700 hover:text-primary-900 font-medium underline-offset-4 hover:underline'
+          >
             Masuk
           </Link>
         </p>
@@ -114,8 +125,13 @@ function StudentRegisterPage() {
             label='Kode referral (opsional)'
             placeholder='ABC123'
           />
-          <Button type='submit' className='w-full' disabled={isPending}>
-            {isPending ? 'Memuat...' : 'Daftar'}
+          <Button
+            type='submit'
+            size='lg'
+            className='w-full'
+            disabled={isPending}
+          >
+            {isPending ? 'Memuat...' : 'Buat akun siswa'}
           </Button>
         </form>
       </FormProvider>

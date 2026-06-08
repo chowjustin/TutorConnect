@@ -63,13 +63,24 @@ function TutorRegisterPage() {
   });
 
   return (
-    <div className='space-y-5'>
-      <div className='space-y-1 text-center'>
-        <h1 className='h3'>Daftar sebagai Tutor</h1>
+    <div className='space-y-7'>
+      <div className='space-y-2'>
+        <Link
+          href='/auth/register'
+          className='text-muted-foreground hover:text-foreground -ml-1 inline-flex items-center gap-1 text-xs'
+        >
+          ← Ubah peran
+        </Link>
+        <h1 className='text-3xl font-semibold tracking-[-0.025em] md:text-4xl'>
+          Daftar sebagai tutor.
+        </h1>
         <p className='text-muted-foreground text-sm'>
-          Sudah punya akun?{' '}
-          <Link href='/auth/login' className='text-primary hover:underline'>
-            Masuk
+          Profil baru ditinjau admin dalam 1×24 jam.{' '}
+          <Link
+            href='/auth/login'
+            className='text-primary-700 hover:text-primary-900 font-medium underline-offset-4 hover:underline'
+          >
+            Sudah punya akun?
           </Link>
         </p>
       </div>
@@ -108,8 +119,13 @@ function TutorRegisterPage() {
             name='referralCode'
             label='Kode referral (opsional)'
           />
-          <Button type='submit' className='w-full' disabled={isPending}>
-            {isPending ? 'Memuat...' : 'Daftar'}
+          <Button
+            type='submit'
+            size='lg'
+            className='w-full'
+            disabled={isPending}
+          >
+            {isPending ? 'Memuat...' : 'Buat akun tutor'}
           </Button>
         </form>
       </FormProvider>
