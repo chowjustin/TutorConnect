@@ -2,7 +2,7 @@
 
 import * as React from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { FileText, FolderOpen, UploadCloud, X } from 'lucide-react';
+import { Download, Eye, FileText, FolderOpen } from 'lucide-react';
 
 import api from '@/lib/api';
 import useAuthStore from '@/store/use-auth-store';
@@ -21,9 +21,22 @@ import {
 import { Skeleton } from '@/components/ui/skeleton';
 import { PageHeader } from '@/components/ui/page-header';
 import { EmptyState } from '@/components/ui/empty-state';
+import { Dropzone } from '@/components/form/dropzone-field';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import { formatDateId } from '@/lib/format';
 import { usePagination } from '@/hooks/use-pagination';
-import { cn } from '@/lib/utils';
 import type { PaginatedApiResponse } from '@/types/api';
 
 import { useUploadMaterial } from './hooks/mutation';
@@ -31,6 +44,7 @@ import { useUploadMaterial } from './hooks/mutation';
 interface MaterialRow {
   id: string;
   title: string | null;
+  fileUrl: string | null;
   fileName: string | null;
   subject: string | null;
   level: string | null;
@@ -38,10 +52,47 @@ interface MaterialRow {
   createdAt: string;
 }
 
-function formatSize(bytes: number): string {
-  if (bytes < 1024) return `${bytes} B`;
-  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
-  return `${(bytes / 1024 / 1024).toFixed(2)} MB`;
+const SUBJECT_LABEL: Record<string, string> = {
+  MATH: 'Matematika',
+  PHYSICS: 'Fisika',
+  CHEMISTRY: 'Kimia',
+  ENGLISH: 'Bahasa Inggris',
+  COMPUTER_SCIENCE: 'Komputer',
+  ECONOMICS: 'Ekonomi',
+  ACCOUNTING: 'Akuntansi',
+};
+
+const LEVEL_LABEL: Record<string, string> = {
+  JUNIOR_HIGH: 'SMP',
+  SENIOR_HIGH: 'SMA',
+  UNIVERSITY: 'Universitas',
+};
+
+const SUBJECTS = Object.keys(SUBJECT_LABEL);
+const LEVELS = Object.keys(LEVEL_LABEL);
+
+async function fetchMaterialBlob(id: string) {
+  const res = await api.get(`/upload/material/${id}`, { responseType: 'blob' });
+  return res.data as Blob;
+}
+
+async function downloadMaterial(id: string, fallbackName: string) {
+  const blob = await fetchMaterialBlob(id);
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = fallbackName || `material-${id}`;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  URL.revokeObjectURL(url);
+}
+
+interface PreviewState {
+  id: string;
+  name: string;
+  url: string;
+  mime: string;
 }
 
 export default function TutorMaterialsPage() {
@@ -49,9 +100,22 @@ export default function TutorMaterialsPage() {
   const tutorProfileId = user?.tutorProfileId;
   const { params } = usePagination();
   const [file, setFile] = React.useState<File | null>(null);
+  const [subject, setSubject] = React.useState<string>('');
+  const [level, setLevel] = React.useState<string>('');
   const [description, setDescription] = React.useState('');
-  const [dragOver, setDragOver] = React.useState(false);
+  const [preview, setPreview] = React.useState<PreviewState | null>(null);
   const upload = useUploadMaterial();
+
+  const openPreview = async (id: string, name: string) => {
+    const blob = await fetchMaterialBlob(id);
+    const url = URL.createObjectURL(blob);
+    setPreview({ id, name, url, mime: blob.type });
+  };
+
+  const closePreview = () => {
+    if (preview) URL.revokeObjectURL(preview.url);
+    setPreview(null);
+  };
 
   const tutorQuery = useQuery<{
     data: MaterialRow[];
@@ -70,24 +134,21 @@ export default function TutorMaterialsPage() {
   const onUpload = () => {
     if (!file) return;
     upload.mutate(
-      { file, description: description || undefined },
+      {
+        file,
+        subject: subject || undefined,
+        level: level || undefined,
+        description: description || undefined,
+      },
       {
         onSuccess: () => {
           setFile(null);
+          setSubject('');
+          setLevel('');
           setDescription('');
         },
       },
     );
-  };
-
-  const handleFiles = (files: FileList | null) => {
-    const f = files?.[0];
-    if (!f) return;
-    if (f.size > 20 * 1024 * 1024) {
-      alert('Ukuran file melebihi 20 MB');
-      return;
-    }
-    setFile(f);
   };
 
   const empty =
@@ -106,65 +167,45 @@ export default function TutorMaterialsPage() {
           <CardTitle>Unggah Materi</CardTitle>
         </CardHeader>
         <CardContent className='space-y-4'>
-          {file ? (
-            <div className='border-primary-200 bg-primary-50/30 flex items-center gap-3 rounded-lg border p-3'>
-              <div className='bg-primary-100 text-primary-700 flex size-14 shrink-0 items-center justify-center rounded-md'>
-                <FileText className='size-6' />
-              </div>
-              <div className='min-w-0 flex-1 text-sm'>
-                <div className='truncate font-medium'>{file.name}</div>
-                <div className='text-muted-foreground mono text-xs'>
-                  {formatSize(file.size)}
-                </div>
-              </div>
-              <Button
-                type='button'
-                variant='ghost'
-                size='icon-sm'
-                aria-label='Hapus file'
-                onClick={() => setFile(null)}
-              >
-                <X className='size-4' />
-              </Button>
+          <Dropzone
+            value={file}
+            onChange={setFile}
+            accept='.pdf,.jpg,.jpeg,.png'
+            maxSizeMB={20}
+          />
+
+          <div className='grid gap-4 sm:grid-cols-2'>
+            <div className='space-y-1.5'>
+              <Label>Mapel</Label>
+              <Select value={subject} onValueChange={setSubject}>
+                <SelectTrigger className='w-full'>
+                  <SelectValue placeholder='Pilih mapel' />
+                </SelectTrigger>
+                <SelectContent>
+                  {SUBJECTS.map((s) => (
+                    <SelectItem key={s} value={s}>
+                      {SUBJECT_LABEL[s]}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
-          ) : (
-            <label
-              onDragOver={(e) => {
-                e.preventDefault();
-                setDragOver(true);
-              }}
-              onDragLeave={() => setDragOver(false)}
-              onDrop={(e) => {
-                e.preventDefault();
-                setDragOver(false);
-                handleFiles(e.dataTransfer.files);
-              }}
-              className={cn(
-                'flex cursor-pointer flex-col items-center gap-2 rounded-lg border border-dashed py-8 text-center transition-all',
-                dragOver
-                  ? 'border-primary-500 bg-primary-50 scale-[1.01]'
-                  : 'border-primary-200 hover:border-primary-300 hover:bg-primary-50/40',
-              )}
-            >
-              <div className='bg-primary-100 text-primary-700 rounded-full p-3'>
-                <UploadCloud className='size-6' />
-              </div>
-              <div>
-                <div className='text-sm font-medium'>
-                  Klik atau seret file ke sini
-                </div>
-                <div className='text-muted-foreground mt-1 text-xs'>
-                  Maks 20 MB · PDF, PNG, JPG
-                </div>
-              </div>
-              <input
-                type='file'
-                accept='.pdf,.jpg,.jpeg,.png'
-                className='sr-only'
-                onChange={(e) => handleFiles(e.target.files)}
-              />
-            </label>
-          )}
+            <div className='space-y-1.5'>
+              <Label>Level</Label>
+              <Select value={level} onValueChange={setLevel}>
+                <SelectTrigger className='w-full'>
+                  <SelectValue placeholder='Pilih level' />
+                </SelectTrigger>
+                <SelectContent>
+                  {LEVELS.map((l) => (
+                    <SelectItem key={l} value={l}>
+                      {LEVEL_LABEL[l]}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
 
           <div className='space-y-1.5'>
             <Label>Deskripsi (opsional)</Label>
@@ -176,7 +217,12 @@ export default function TutorMaterialsPage() {
             />
           </div>
 
-          <Button onClick={onUpload} disabled={upload.isPending || !file}>
+          <Button
+            onClick={onUpload}
+            disabled={upload.isPending || !file}
+            className='w-full'
+            size='lg'
+          >
             {upload.isPending ? 'Mengunggah...' : 'Unggah'}
           </Button>
         </CardContent>
@@ -203,24 +249,103 @@ export default function TutorMaterialsPage() {
                   <TableHead>Nama File</TableHead>
                   <TableHead>Mapel</TableHead>
                   <TableHead>Level</TableHead>
+                  <TableHead>Aksi</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {tutorQuery.data?.data.map((m) => (
-                  <TableRow key={m.id}>
-                    <TableCell className='mono text-muted-foreground text-xs tabular-nums'>
-                      {formatDateId(m.createdAt)}
-                    </TableCell>
-                    <TableCell>{m.fileName ?? m.title ?? '—'}</TableCell>
-                    <TableCell>{m.subject ?? '—'}</TableCell>
-                    <TableCell>{m.level ?? '—'}</TableCell>
-                  </TableRow>
-                ))}
+                {tutorQuery.data?.data.map((m) => {
+                  const name = m.fileName ?? m.title ?? '—';
+                  return (
+                    <TableRow key={m.id}>
+                      <TableCell className='mono text-muted-foreground text-xs tabular-nums'>
+                        {formatDateId(m.createdAt)}
+                      </TableCell>
+                      <TableCell className='max-w-xs truncate'>
+                        {name}
+                      </TableCell>
+                      <TableCell>
+                        {m.subject
+                          ? (SUBJECT_LABEL[m.subject] ?? m.subject)
+                          : '—'}
+                      </TableCell>
+                      <TableCell>
+                        {m.level ? (LEVEL_LABEL[m.level] ?? m.level) : '—'}
+                      </TableCell>
+                      <TableCell>
+                        <div className='flex gap-2'>
+                          <Button
+                            variant='secondary'
+                            size='sm'
+                            onClick={() => openPreview(m.id, name)}
+                          >
+                            <Eye className='size-4' />
+                            Lihat
+                          </Button>
+                          <Button
+                            size='sm'
+                            onClick={() => downloadMaterial(m.id, name)}
+                          >
+                            <Download className='size-4' />
+                            Unduh
+                          </Button>
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  );
+                })}
               </TableBody>
             </Table>
           </div>
         )}
       </section>
+
+      <Dialog
+        open={!!preview}
+        onOpenChange={(o) => {
+          if (!o) closePreview();
+        }}
+      >
+        <DialogContent className='max-h-[90vh] overflow-hidden sm:max-w-4xl'>
+          <DialogHeader>
+            <DialogTitle className='flex items-center gap-2 text-base'>
+              <FileText className='text-primary-700 size-4' />
+              {preview?.name}
+            </DialogTitle>
+          </DialogHeader>
+          {preview ? (
+            preview.mime.startsWith('image/') ? (
+              <div className='flex max-h-[70vh] items-center justify-center overflow-auto'>
+                <img
+                  src={preview.url}
+                  alt={preview.name}
+                  className='max-h-[70vh] object-contain'
+                />
+              </div>
+            ) : preview.mime === 'application/pdf' ? (
+              <iframe
+                src={preview.url}
+                title={preview.name}
+                className='h-[70vh] w-full rounded-md border'
+              />
+            ) : (
+              <div className='text-muted-foreground flex h-60 flex-col items-center justify-center gap-2 text-sm'>
+                <FileText className='size-8' />
+                Preview tidak tersedia untuk tipe ini.
+              </div>
+            )
+          ) : null}
+          {preview ? (
+            <div className='flex justify-end'>
+              <Button
+                onClick={() => downloadMaterial(preview.id, preview.name)}
+              >
+                <Download className='size-4' />
+                Unduh
+              </Button>
+            </div>
+          ) : null}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

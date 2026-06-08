@@ -2,13 +2,11 @@
 
 import * as React from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { CheckCircle2, Sparkles } from 'lucide-react';
+import { CheckCircle2 } from 'lucide-react';
 
 import api from '@/lib/api';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Badge } from '@/components/ui/badge';
 import { PaymentCheckoutModal } from '@/components/checkout/payment-checkout-modal';
 import { formatDateId, formatRupiah } from '@/lib/format';
 import type { PlanTier } from '@/types/shared';
@@ -31,65 +29,71 @@ export function SubscriptionCard({ tier, description, price, perks }: Props) {
 
   const active = meQ.data?.tier === tier;
   const isPro = tier === 'PRO_TUTOR';
+  const name = tier === 'PREMIUM_STUDENT' ? 'Premium Siswa' : 'Pro Tutor';
 
   return (
     <>
-      <Card
-        className={`hover:shadow-md hover:shadow-primary-500/5 transition-shadow ${isPro ? 'border-primary-300 ring-2 ring-primary-100' : ''}`}
+      <article
+        className={`relative flex flex-col rounded-2xl p-8 md:p-10 ${
+          isPro
+            ? 'border-primary-300 ring-primary-200/50 shadow-primary-500/5 border bg-white shadow-md ring-2'
+            : 'border-primary-100 border bg-white'
+        }`}
       >
         {isPro ? (
-          <div className='from-primary-600 to-primary-400 bg-gradient-to-r px-4 py-1 text-center text-xs font-bold uppercase tracking-wider text-white'>
-            Paling Populer
-          </div>
+          <span className='bg-primary-600 text-primary-foreground absolute -top-3 left-8 rounded-full px-3 py-1 text-[10px] font-semibold tracking-wider uppercase'>
+            Paling populer
+          </span>
         ) : null}
-        <CardHeader>
-          <CardTitle className='flex items-center justify-between gap-2'>
-            <span className='inline-flex items-center gap-2'>
-              {isPro ? (
-                <Sparkles className='text-amber-500 size-5' />
-              ) : null}
-              {tier === 'PREMIUM_STUDENT' ? 'Premium Siswa' : 'Pro Tutor'}
-            </span>
-            {active ? (
-              <Badge className='bg-emerald-100 text-emerald-700 border border-emerald-200'>
-                Aktif
-              </Badge>
-            ) : null}
-          </CardTitle>
-        </CardHeader>
-        <CardContent className='space-y-4'>
-          <div>
-            <div className='mono text-3xl font-bold text-primary-900'>
-              {formatRupiah(price)}
-            </div>
-            <div className='text-muted-foreground text-xs'>per bulan</div>
-          </div>
-          <p className='text-muted-foreground text-sm'>{description}</p>
-          <ul className='space-y-1.5 text-sm'>
-            {perks.map((p) => (
-              <li key={p} className='flex items-start gap-2'>
-                <CheckCircle2 className='text-emerald-600 mt-0.5 size-4 shrink-0' />
-                <span>{p}</span>
-              </li>
-            ))}
-          </ul>
-          {meQ.isLoading ? (
-            <Skeleton className='h-4 w-32' />
-          ) : meQ.data?.expiresAt && active ? (
-            <p className='text-muted-foreground text-xs'>
-              Berakhir {formatDateId(meQ.data.expiresAt)}
-            </p>
-          ) : null}
+        {active ? (
+          <span className='absolute -top-3 right-8 rounded-full border border-emerald-200 bg-emerald-50 px-3 py-1 text-[10px] font-semibold tracking-wider text-emerald-700 uppercase'>
+            Aktif
+          </span>
+        ) : null}
+
+        <h3 className='text-foreground text-xl font-semibold'>{name}</h3>
+        <p className='text-muted-foreground mt-1 text-sm'>{description}</p>
+
+        <div className='mt-6 flex items-baseline gap-1'>
+          <span className='mono text-foreground text-4xl font-semibold tabular-nums'>
+            {formatRupiah(price)}
+          </span>
+          <span className='text-muted-foreground text-sm'>/bulan</span>
+        </div>
+
+        <ul className='mt-6 space-y-2.5 text-sm'>
+          {perks.map((p) => (
+            <li key={p} className='flex items-start gap-2'>
+              <CheckCircle2
+                className={`mt-0.5 size-4 shrink-0 ${
+                  isPro ? 'text-primary-600' : 'text-emerald-600'
+                }`}
+              />
+              <span>{p}</span>
+            </li>
+          ))}
+        </ul>
+
+        {meQ.isLoading ? (
+          <Skeleton className='mt-6 h-4 w-32' />
+        ) : meQ.data?.expiresAt && active ? (
+          <p className='text-muted-foreground mt-6 text-xs'>
+            Berakhir {formatDateId(meQ.data.expiresAt)}
+          </p>
+        ) : null}
+
+        <div className='mt-auto pt-8'>
           <Button
             onClick={() => setOpen(true)}
             disabled={active}
             className='w-full'
             size='lg'
+            variant={isPro ? 'default' : 'outline'}
           >
             {active ? 'Aktif' : 'Berlangganan'}
           </Button>
-        </CardContent>
-      </Card>
+        </div>
+      </article>
 
       <PaymentCheckoutModal
         open={open}
@@ -100,7 +104,7 @@ export function SubscriptionCard({ tier, description, price, perks }: Props) {
             ? 'Berlangganan Premium Siswa'
             : 'Berlangganan Pro Tutor'
         }
-        description={`Aktif 30 hari setelah pembayaran dikonfirmasi.`}
+        description='Aktif 30 hari setelah pembayaran dikonfirmasi.'
         amount={price}
         invalidate={[['/subscription/me']]}
         createIntent={async () => {
@@ -108,7 +112,6 @@ export function SubscriptionCard({ tier, description, price, perks }: Props) {
             '/subscription/request',
             { tier },
           );
-          // Backend may return refId only; fall back to tier + price.
           const d = res.data as { refId?: string; amount?: number };
           return { refId: d.refId ?? tier, amount: d.amount ?? price };
         }}

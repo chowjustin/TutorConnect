@@ -19,6 +19,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Card, CardContent } from '@/components/ui/card';
+import { Dropzone } from '@/components/form/dropzone-field';
 import { formatRupiah } from '@/lib/format';
 import { notifyAxiosError, notifySuccess } from '@/lib/toast';
 import type { PaymentKind, PaymentMethod } from '@/types/shared';
@@ -182,14 +183,12 @@ export function PaymentCheckoutModal({
 
           <div className='space-y-1.5'>
             <Label>Bukti Pembayaran</Label>
-            <Input
-              type='file'
+            <Dropzone
+              value={proof}
+              onChange={setProof}
               accept='.png,.jpg,.jpeg,.pdf'
-              onChange={(e) => setProof(e.target.files?.[0] ?? null)}
+              maxSizeMB={5}
             />
-            <p className='text-muted-foreground text-xs'>
-              Maks 5MB. PNG, JPG, atau PDF.
-            </p>
           </div>
         </div>
 

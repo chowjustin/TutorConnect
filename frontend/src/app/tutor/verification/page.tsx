@@ -11,6 +11,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { PageHeader } from '@/components/ui/page-header';
 import { StatusBadge } from '@/components/ui/status-badge';
 import { ImageLightbox } from '@/components/ui/image-lightbox';
+import { Dropzone } from '@/components/form/dropzone-field';
 import { notifyAxiosError, notifySuccess } from '@/lib/toast';
 import { resolveFileUrl } from '@/lib/file-url';
 import { useTutorProfile } from '@/app/tutor/profile/hooks/query';
@@ -201,20 +202,21 @@ function DocSlot({
           </Button>
         </div>
       ) : (
-        <label className='border-primary-200 hover:border-primary-300 hover:bg-primary-50/30 block cursor-pointer rounded-lg border border-dashed py-6 text-center text-sm'>
-          <span className='text-muted-foreground'>
-            {uploading ? 'Mengunggah...' : 'Klik untuk pilih file'}
-          </span>
-          <input
-            type='file'
-            className='sr-only'
-            accept='.pdf,.png,.jpg,.jpeg'
-            onChange={(e) => {
-              const f = e.target.files?.[0];
+        <div className='relative'>
+          <Dropzone
+            value={null}
+            onChange={(f) => {
               if (f) onPick(f);
             }}
+            accept='.pdf,.png,.jpg,.jpeg'
+            maxSizeMB={5}
           />
-        </label>
+          {uploading ? (
+            <div className='bg-primary-50/80 text-primary-700 absolute inset-0 flex items-center justify-center rounded-lg text-sm font-medium backdrop-blur-sm'>
+              Mengunggah...
+            </div>
+          ) : null}
+        </div>
       )}
     </div>
   );

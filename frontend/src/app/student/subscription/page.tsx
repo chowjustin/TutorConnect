@@ -11,7 +11,7 @@ export default function StudentSubscriptionPage() {
         title='Langganan'
         description='Tingkatkan akun untuk akses fitur premium.'
       />
-      <div className='mx-auto max-w-md'>
+      <div className='max-w-md'>
         <SubscriptionCard
           tier='PREMIUM_STUDENT'
           description='Akses materi premium, prioritas booking, dukungan langsung.'

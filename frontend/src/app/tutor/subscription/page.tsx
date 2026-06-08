@@ -11,7 +11,7 @@ export default function TutorSubscriptionPage() {
         title='Langganan Pro Tutor'
         description='Komisi lebih rendah, analitik lengkap, dan badge Pro.'
       />
-      <div className='mx-auto max-w-md'>
+      <div className='max-w-md'>
         <SubscriptionCard
           tier='PRO_TUTOR'
           description='Untuk tutor profesional yang ingin tumbuh lebih cepat.'

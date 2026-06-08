@@ -27,7 +27,7 @@ export function PublishGate({ profile, completeness }: Props) {
   const canPublish = verified && reachedScore && !isPublished;
 
   return (
-    <div className='border-primary-100 space-y-3 border-t pt-5'>
+    <div className='border-primary-100 mt-4 space-y-3 border-t pt-4'>
       <div className='flex items-center justify-between gap-3'>
         <h3 className='text-sm font-semibold'>Status Publikasi</h3>
         <StatusBadge kind='verification' status={profile.verificationStatus} />
