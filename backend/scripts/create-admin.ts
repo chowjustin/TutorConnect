@@ -1,6 +1,6 @@
 /**
  * Usage:
- *   pnpm run admin:create -- --email=root@dbbconnect.id --name=Root --password=changeme --phone=+6281234567890
+ *   pnpm run admin:create -- --email=root@tutorconnect.id --name=Root --password=changeme --phone=+6281234567890
  *
  * Idempotent: skips if user with email already exists.
  */

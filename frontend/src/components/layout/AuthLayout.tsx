@@ -65,7 +65,7 @@ export function AuthLayout({ children }: { children: React.ReactNode }) {
           className='text-foreground relative inline-flex items-center gap-2 text-base font-semibold'
         >
           <GraduationCap className='text-primary-600 size-5' />
-          DBBConnect
+          TutorConnect
         </Link>
 
         {/* Single focused moment: headline + 3 trust points */}
@@ -111,7 +111,7 @@ export function AuthLayout({ children }: { children: React.ReactNode }) {
             className='inline-flex items-center gap-2 text-base font-semibold'
           >
             <GraduationCap className='text-primary-600 size-5' />
-            DBBConnect
+            TutorConnect
           </Link>
         </div>
 
@@ -131,7 +131,8 @@ export function AuthLayout({ children }: { children: React.ReactNode }) {
         </div>
 
         <footer className='text-muted-foreground px-6 py-6 text-center text-xs sm:px-8'>
-          © {new Date().getFullYear()} DBBConnect · Marketplace tutor Indonesia
+          © {new Date().getFullYear()} TutorConnect · Marketplace tutor
+          Indonesia
         </footer>
       </main>
     </div>

@@ -59,7 +59,7 @@ async function bootstrap() {
 
   if (process.env.NODE_ENV !== 'production') {
     const config = new DocumentBuilder()
-      .setTitle('DBBConnect API')
+      .setTitle('TutorConnect API')
       .setVersion('0.1')
       .addBearerAuth()
       .build();

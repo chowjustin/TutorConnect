@@ -254,7 +254,7 @@ export class SessionsService {
       'BEGIN:VCALENDAR',
       'VERSION:2.0',
       'BEGIN:VEVENT',
-      `UID:${s.id}@dbbconnect`,
+      `UID:${s.id}@tutorconnect`,
       `DTSTAMP:${fmt(new Date())}`,
       `DTSTART:${fmt(s.startsAt)}`,
       `DTEND:${fmt(s.endsAt)}`,

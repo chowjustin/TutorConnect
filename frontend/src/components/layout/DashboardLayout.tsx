@@ -42,7 +42,11 @@ interface DashboardLayoutProps {
   children: React.ReactNode;
 }
 
-export function DashboardLayout({ role, user, children }: DashboardLayoutProps) {
+export function DashboardLayout({
+  role,
+  user,
+  children,
+}: DashboardLayoutProps) {
   const pathname = usePathname();
   const router = useRouter();
   const logout = useAuthStore.useLogout();
@@ -71,7 +75,7 @@ export function DashboardLayout({ role, user, children }: DashboardLayoutProps) 
           >
             <GraduationCap className='text-primary size-5 shrink-0' />
             <span className='truncate text-sm font-bold group-data-[collapsible=icon]:hidden'>
-              DBBConnect
+              TutorConnect
             </span>
           </Link>
         </SidebarHeader>
@@ -92,7 +96,7 @@ export function DashboardLayout({ role, user, children }: DashboardLayoutProps) 
                         tooltip={entry.label}
                         className={
                           active
-                            ? 'bg-primary-100 text-primary-700 font-semibold hover:bg-primary-100 hover:text-primary-700 data-[active=true]:bg-primary-100 data-[active=true]:text-primary-700'
+                            ? 'bg-primary-100 text-primary-700 hover:bg-primary-100 hover:text-primary-700 data-[active=true]:bg-primary-100 data-[active=true]:text-primary-700 font-semibold'
                             : 'hover:bg-primary-50 hover:text-primary-700'
                         }
                       >
@@ -121,7 +125,7 @@ export function DashboardLayout({ role, user, children }: DashboardLayoutProps) 
         <SidebarRail />
       </Sidebar>
       <SidebarInset>
-        <header className='sticky top-0 z-10 flex h-14 items-center gap-3 border-b border-primary-100/60 bg-white/70 px-4 backdrop-blur-xl'>
+        <header className='border-primary-100/60 sticky top-0 z-10 flex h-14 items-center gap-3 border-b bg-white/70 px-4 backdrop-blur-xl'>
           <SidebarTrigger />
           <Separator orientation='vertical' className='h-6' />
           <div className='flex-1' />
@@ -131,8 +135,8 @@ export function DashboardLayout({ role, user, children }: DashboardLayoutProps) 
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button variant='ghost' size='sm' className='gap-2 px-2'>
-                <Avatar className='size-8 ring-2 ring-primary-100'>
-                  <AvatarFallback className='bg-gradient-to-br from-primary-400 to-primary-600 text-xs font-bold text-white'>
+                <Avatar className='ring-primary-100 size-8 ring-2'>
+                  <AvatarFallback className='from-primary-400 to-primary-600 bg-gradient-to-br text-xs font-bold text-white'>
                     {initials}
                   </AvatarFallback>
                 </Avatar>

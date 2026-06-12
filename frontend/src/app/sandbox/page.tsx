@@ -9,10 +9,10 @@ export default function SandboxPage() {
   if (process.env.NEXT_PUBLIC_SHOW_SANDBOX !== 'true') notFound();
 
   return (
-    <div className='min-h-screen bg-background'>
+    <div className='bg-background min-h-screen'>
       <header className='border-b'>
         <div className='layout flex items-center justify-between py-4'>
-          <h1 className='h3'>DBBConnect Sandbox</h1>
+          <h1 className='h3'>TutorConnect Sandbox</h1>
           <nav className='flex gap-4 text-sm'>
             <a className='animated-underline' href='#colors'>
               Colors

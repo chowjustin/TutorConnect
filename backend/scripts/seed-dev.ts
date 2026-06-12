@@ -97,14 +97,14 @@ async function ensureStudentProfile(
 
 async function main() {
   // ---- Admin ----------------------------------------------------------
-  const admin = await ensureUser('admin@dbbconnect.id', UserRole.ADMIN, {
+  const admin = await ensureUser('admin@tutorconnect.id', UserRole.ADMIN, {
     name: 'Site Admin',
     phone: '+6281200000000',
     password: ADMIN_PASSWORD,
   });
 
   // ---- Verified + published tutors ------------------------------------
-  const alice = await ensureUser('tutor@dbbconnect.id', UserRole.TUTOR, {
+  const alice = await ensureUser('tutor@tutorconnect.id', UserRole.TUTOR, {
     name: 'Alice Tutor',
     phone: '+6281200000001',
   });
@@ -122,7 +122,7 @@ async function main() {
     bankHolder: 'Alice Tutor',
   });
 
-  const charlie = await ensureUser('tutor2@dbbconnect.id', UserRole.TUTOR, {
+  const charlie = await ensureUser('tutor2@tutorconnect.id', UserRole.TUTOR, {
     name: 'Charlie Coder',
     phone: '+6281200000003',
   });
@@ -142,7 +142,7 @@ async function main() {
 
   // ---- Pending verification tutor (admin queue smoke test) ------------
   const dani = await ensureUser(
-    'tutor.pending@dbbconnect.id',
+    'tutor.pending@tutorconnect.id',
     UserRole.TUTOR,
     { name: 'Dani Draft', phone: '+6281200000004' },
   );
@@ -161,7 +161,7 @@ async function main() {
   });
 
   // ---- Students ------------------------------------------------------
-  const bob = await ensureUser('student@dbbconnect.id', UserRole.STUDENT, {
+  const bob = await ensureUser('student@tutorconnect.id', UserRole.STUDENT, {
     name: 'Bob Student',
     phone: '+6281200000002',
   });
@@ -172,7 +172,7 @@ async function main() {
     whatsapp: '+6281200000002',
   });
 
-  const emma = await ensureUser('student2@dbbconnect.id', UserRole.STUDENT, {
+  const emma = await ensureUser('student2@tutorconnect.id', UserRole.STUDENT, {
     name: 'Emma Engineer',
     phone: '+6281200000005',
   });
@@ -191,7 +191,7 @@ async function main() {
       id: 'seed-bank',
       bankName: 'BCA',
       accountNumber: '9876543210',
-      accountHolder: 'PT DBBConnect',
+      accountHolder: 'PT TutorConnect',
       isActive: true,
     },
   });
@@ -213,13 +213,13 @@ async function main() {
 
   console.log('\nDev seed complete.\n');
   console.log('Accounts (password: password123 unless noted):');
-  console.log('  ADMIN   admin@dbbconnect.id            (password: admin123)');
-  console.log('  TUTOR   tutor@dbbconnect.id            (verified + published, Math/Physics)');
-  console.log('  TUTOR   tutor2@dbbconnect.id           (verified + published, CS/Math)');
-  console.log('  TUTOR   tutor.pending@dbbconnect.id    (pending verification, English)');
-  console.log('  STUDENT student@dbbconnect.id          (SMA 12)');
-  console.log('  STUDENT student2@dbbconnect.id         (university)');
-  console.log('Platform bank: BCA 9876543210 a.n. PT DBBConnect');
+  console.log('  ADMIN   admin@tutorconnect.id            (password: admin123)');
+  console.log('  TUTOR   tutor@tutorconnect.id            (verified + published, Math/Physics)');
+  console.log('  TUTOR   tutor2@tutorconnect.id           (verified + published, CS/Math)');
+  console.log('  TUTOR   tutor.pending@tutorconnect.id    (pending verification, English)');
+  console.log('  STUDENT student@tutorconnect.id          (SMA 12)');
+  console.log('  STUDENT student2@tutorconnect.id         (university)');
+  console.log('Platform bank: BCA 9876543210 a.n. PT TutorConnect');
   console.log('Promo code:    WELCOME10 (10%, max 1000 uses, 90d expiry)');
 }
 

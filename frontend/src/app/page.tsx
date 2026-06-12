@@ -59,7 +59,7 @@ function Header() {
           className='inline-flex items-center gap-2 text-base font-semibold'
         >
           <GraduationCap className='text-primary-600 size-5' />
-          DBBConnect
+          TutorConnect
         </Link>
         <nav
           className='hidden items-center gap-7 text-sm md:flex'
@@ -309,7 +309,7 @@ function Hero() {
                 <span className='size-2.5 rounded-full bg-emerald-400' />
               </div>
               <div className='mono text-muted-foreground ml-3 flex-1 truncate text-[11px] tabular-nums'>
-                dbbconnect.id/tutor?mapel=Matematika
+                tutorconnect.id/tutor?mapel=Matematika
               </div>
             </div>
 
@@ -810,10 +810,10 @@ function FAQ() {
           <p className='text-muted-foreground mt-3 text-sm text-pretty'>
             Tidak menemukan jawaban? Hubungi tim kami di{' '}
             <a
-              href='mailto:halo@dbbconnect.id'
+              href='mailto:halo@tutorconnect.id'
               className='text-primary-700 hover:text-primary-900 font-medium'
             >
-              halo@dbbconnect.id
+              halo@tutorconnect.id
             </a>
             .
           </p>
@@ -976,7 +976,7 @@ function Footer() {
             className='inline-flex items-center gap-2 text-base font-semibold'
           >
             <GraduationCap className='text-primary-600 size-5' />
-            DBBConnect
+            TutorConnect
           </Link>
           <p className='text-muted-foreground text-sm leading-relaxed'>
             Marketplace tutor-siswa untuk Indonesia. Verifikasi dokumen,
@@ -1025,7 +1025,7 @@ function Footer() {
             </li>
             <li>
               <a
-                href='mailto:halo@dbbconnect.id'
+                href='mailto:halo@tutorconnect.id'
                 className='hover:text-foreground'
               >
                 Kontak
@@ -1035,7 +1035,7 @@ function Footer() {
         </div>
       </div>
       <div className='layout text-muted-foreground border-primary-100 mt-10 flex flex-wrap items-center justify-between gap-2 border-t pt-6 text-xs'>
-        <span>© {new Date().getFullYear()} DBBConnect.</span>
+        <span>© {new Date().getFullYear()} TutorConnect.</span>
         <span>Dibangun di Indonesia.</span>
       </div>
     </footer>

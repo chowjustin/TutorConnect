@@ -2,7 +2,7 @@ import type { Metadata } from 'next';
 
 import { siteUrl } from '@/constant/env';
 
-const APP_NAME = 'DBBConnect';
+const APP_NAME = 'TutorConnect';
 const APP_DESC =
   'Cari tutor terverifikasi, jadwalkan sesi, dan kelola pembayaran dalam satu platform.';
 
