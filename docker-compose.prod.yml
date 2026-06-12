@@ -21,9 +21,24 @@ services:
         expose:
             - '5432'
 
+    # backend:
+    #     build:
+    #         context: ./backend
+    #     restart: unless-stopped
+    #     env_file:
+    #         - .env
+    #     environment:
+    #         NODE_ENV: production
+    #         PORT: '8098'
+    #         DATABASE_URL: postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB}?schema=public
+    #     depends_on:
+    #         postgres:
+    #             condition: service_healthy
+    #     ports:
+    #         - '127.0.0.1:8099:8098'
+
     backend:
-        build:
-            context: ./backend
+        image: ghcr.io/chowjustin/dbbconnect:latest
         restart: unless-stopped
         env_file:
             - .env
