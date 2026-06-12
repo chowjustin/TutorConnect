@@ -1,0 +1,56 @@
+name: CI
+
+# Build + typecheck both apps on every PR and push. This is the correctness
+# gate; the deploy workflows re-run the relevant build before shipping.
+on:
+    pull_request:
+    push:
+        branches: [main]
+
+concurrency:
+    group: ci-${{ github.ref }}
+    cancel-in-progress: true
+
+jobs:
+    backend:
+        runs-on: ubuntu-latest
+        defaults:
+            run:
+                working-directory: backend
+        steps:
+            - uses: actions/checkout@v4
+            - uses: pnpm/action-setup@v4
+              with:
+                  version: 10.30.3
+            - uses: actions/setup-node@v4
+              with:
+                  node-version: 22
+                  cache: pnpm
+                  cache-dependency-path: backend/pnpm-lock.yaml
+            - run: pnpm install --frozen-lockfile
+            - run: pnpm prisma generate
+            - run: pnpm build
+
+    # frontend:
+    #   runs-on: ubuntu-latest
+    #   defaults:
+    #     run:
+    #       working-directory: frontend
+    #   env:
+    #     # Public values only — safe to expose. Used so the build matches prod.
+    #     NEXT_PUBLIC_API_URL: ${{ vars.NEXT_PUBLIC_API_URL || 'https://api.example.com' }}
+    #     NEXT_PUBLIC_SITE_URL: ${{ vars.NEXT_PUBLIC_SITE_URL || 'https://example.com' }}
+    #     NEXT_PUBLIC_SHOW_SANDBOX: 'false'
+    #     NEXT_PUBLIC_SHOW_LOGGER: 'false'
+    #   steps:
+    #     - uses: actions/checkout@v4
+    #     - uses: pnpm/action-setup@v4
+    #       with:
+    #         version: 10.30.3
+    #     - uses: actions/setup-node@v4
+    #       with:
+    #         node-version: 22
+    #         cache: pnpm
+    #         cache-dependency-path: frontend/pnpm-lock.yaml
+    #     - run: pnpm install --frozen-lockfile
+    #     - run: pnpm build

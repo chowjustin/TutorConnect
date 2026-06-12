@@ -1,0 +1,68 @@
+name: Deploy Backend
+
+# Builds on the runner to fail fast, then rsyncs the backend + compose file to
+# the VPS over SSH and rebuilds just the backend (and postgres) containers.
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'backend/**'
+      - 'docker-compose.prod.yml'
+      - '.github/workflows/deploy-backend.yml'
+  workflow_dispatch:
+
+concurrency:
+  group: deploy-backend
+  cancel-in-progress: false
+
+jobs:
+  build-check:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: backend
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10.30.3
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+          cache-dependency-path: backend/pnpm-lock.yaml
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm prisma generate
+      - run: pnpm build
+
+  deploy:
+    needs: build-check
+    runs-on: ubuntu-latest
+    env:
+      SSH_PORT: ${{ secrets.DEPLOY_PORT || 22 }}
+      SSH_DEST: ${{ secrets.DEPLOY_USER }}@${{ secrets.DEPLOY_HOST }}
+      DEPLOY_PATH: ${{ secrets.DEPLOY_PATH }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Configure SSH
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.DEPLOY_SSH_KEY }}" > ~/.ssh/id_deploy
+          chmod 600 ~/.ssh/id_deploy
+          ssh-keyscan -p "$SSH_PORT" -H "${{ secrets.DEPLOY_HOST }}" >> ~/.ssh/known_hosts 2>/dev/null
+
+      - name: Sync backend + compose to VPS
+        run: |
+          rsync -az --delete \
+            -e "ssh -i ~/.ssh/id_deploy -p $SSH_PORT" \
+            --exclude '.git' --exclude 'node_modules' --exclude 'dist' \
+            --exclude 'coverage' --exclude '.env' --exclude '.env.*' \
+            ./backend/ "$SSH_DEST:$DEPLOY_PATH/backend/"
+          rsync -az -e "ssh -i ~/.ssh/id_deploy -p $SSH_PORT" \
+            ./docker-compose.prod.yml "$SSH_DEST:$DEPLOY_PATH/docker-compose.prod.yml"
+
+      - name: Build & restart backend
+        run: |
+          ssh -i ~/.ssh/id_deploy -p "$SSH_PORT" "$SSH_DEST" \
+            "cd '$DEPLOY_PATH' && docker compose -f docker-compose.prod.yml up -d --build postgres backend && docker image prune -f"
