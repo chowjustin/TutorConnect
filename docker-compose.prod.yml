@@ -1,12 +1,4 @@
 name: dbbconnect
-
-# Production stack — BACKEND ONLY (frontend is hosted on Vercel).
-# nginx + certbot run on the HOST and reverse-proxy api.example.com to the
-# backend published on 127.0.0.1:8000 below. Postgres is NOT published to the
-# host; it is only reachable on the internal compose network by the backend.
-#
-# All values come from the single ./.env file (see .env.prod.example).
-
 services:
     postgres:
         image: postgres:17
