@@ -45,7 +45,17 @@ export function Providers({ children }: { children: React.ReactNode }) {
   return (
     <QueryClientProvider client={queryClient}>
       {children}
-      <Toaster richColors position='top-right' />
+      <Toaster
+        richColors
+        closeButton
+        position='top-right'
+        toastOptions={{
+          classNames: {
+            closeButton:
+              '!left-auto !right-0 !-translate-x-1/2 !translate-y-1/2 !mt-2',
+          },
+        }}
+      />
       <BaseDialog />
       <CommandPalette />
     </QueryClientProvider>

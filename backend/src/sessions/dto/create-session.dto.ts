@@ -8,7 +8,12 @@ import {
   IsString,
   Min,
 } from 'class-validator';
-import { ClassFormat, ClassMode } from '@prisma/client';
+import {
+  ClassFormat,
+  ClassMode,
+  EducationLevel,
+  Subject,
+} from '@prisma/client';
 
 export class CreateSessionDto {
   @IsString()
@@ -46,4 +51,13 @@ export class CreateSessionDto {
   @IsOptional()
   @IsString()
   notes?: string;
+
+  @IsArray()
+  @ArrayMinSize(1)
+  @IsEnum(Subject, { each: true })
+  subjects: Subject[];
+
+  @IsOptional()
+  @IsEnum(EducationLevel)
+  level?: EducationLevel;
 }

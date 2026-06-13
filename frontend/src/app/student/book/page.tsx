@@ -20,16 +20,26 @@ import { EmptyState } from '@/components/ui/empty-state';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { TextField } from '@/components/form/text-field';
 import { SelectField } from '@/components/form/select-field';
-import { notifyAxiosError, notifySuccess } from '@/lib/toast';
+import { notifyAxiosError, notifyError, notifySuccess } from '@/lib/toast';
 import { formatRupiah } from '@/lib/format';
-import { minutesToHHmm } from '@/lib/time';
+import { hhmmToMinutes, minutesToHHmm } from '@/lib/time';
 import {
   CLASS_FORMAT_OPTIONS,
   CLASS_MODE_OPTIONS,
+  EDUCATION_LEVEL_OPTIONS,
+  SUBJECT_OPTIONS,
   classFormatLabel,
   classModeLabel,
+  educationLevelLabel,
+  subjectLabels,
 } from '@/constant/enums';
-import type { ClassFormat, ClassMode } from '@/types/shared';
+import { MultiToggleField } from '@/components/form/multi-toggle-field';
+import type {
+  ClassFormat,
+  ClassMode,
+  EducationLevel,
+  Subject,
+} from '@/types/shared';
 
 interface ApplicationItem {
   id: string;
@@ -67,6 +77,8 @@ interface BookForm {
   endTime: string;
   format: ClassFormat;
   mode: ClassMode;
+  subjects: Subject[];
+  level: EducationLevel;
 }
 
 const schema = z
@@ -77,6 +89,20 @@ const schema = z
     endTime: z.string().min(1, 'Pilih waktu selesai'),
     format: z.enum(['PRIVATE_1', 'SEMI_PRIVATE', 'GROUP']),
     mode: z.enum(['ONLINE', 'OFFLINE']),
+    subjects: z
+      .array(
+        z.enum([
+          'MATH',
+          'PHYSICS',
+          'CHEMISTRY',
+          'ENGLISH',
+          'COMPUTER_SCIENCE',
+          'ECONOMICS',
+          'ACCOUNTING',
+        ]),
+      )
+      .min(1, 'Pilih minimal 1 mata pelajaran'),
+    level: z.enum(['JUNIOR_HIGH', 'SENIOR_HIGH', 'UNIVERSITY']),
   })
   .refine((d) => d.startTime < d.endTime, {
     path: ['endTime'],
@@ -102,6 +128,8 @@ export default function BookSessionPage() {
       endTime: '',
       format: 'PRIVATE_1',
       mode: 'ONLINE',
+      subjects: [],
+      level: 'SENIOR_HIGH',
     },
   });
 
@@ -127,7 +155,7 @@ export default function BookSessionPage() {
 
   const avail = useQuery<AvailabilitySlot[]>({
     queryKey: [`/tutors/${values.tutorId}/availability`],
-    enabled: !!values.tutorId && step >= 1,
+    enabled: !!values.tutorId,
   });
 
   const book = useMutation({
@@ -142,6 +170,8 @@ export default function BookSessionPage() {
           tutorId: v.tutorId,
           format: v.format,
           mode: v.mode,
+          subjects: v.subjects,
+          level: v.level,
           startsAt,
           endsAt,
           pricePerSeat: selectedTutor.hourlyRate ?? 0,
@@ -159,17 +189,39 @@ export default function BookSessionPage() {
     onError: (e) => notifyAxiosError(e, 'Gagal memesan sesi'),
   });
 
-  const onSubmit = methods.handleSubmit((v) => book.mutate(v));
+  const handleBook = async () => {
+    const valid = await methods.trigger();
+    if (!valid) return;
+    book.mutate(methods.getValues());
+  };
 
   const STEP_FIELDS: Record<number, (keyof BookForm)[]> = {
     0: ['tutorId'],
-    1: ['date', 'startTime', 'endTime', 'format', 'mode'],
+    1: ['date', 'startTime', 'endTime', 'format', 'mode', 'subjects', 'level'],
     2: [],
   };
 
   const handleNext = async () => {
     const ok = await methods.trigger(STEP_FIELDS[step], { shouldFocus: true });
     if (!ok) return;
+
+    if (step === 1) {
+      const v = methods.getValues();
+      if (!v.date || !v.startTime || !v.endTime) return;
+      const day = new Date(`${v.date}T00:00:00`).getDay();
+      const startMin = hhmmToMinutes(v.startTime);
+      const endMin = hhmmToMinutes(v.endTime);
+      const slots = avail.data ?? [];
+      const within = slots.some(
+        (s) =>
+          s.dayOfWeek === day && startMin >= s.startMin && endMin <= s.endMin,
+      );
+      if (!within) {
+        notifyError('Waktu yang dipilih di luar jadwal ketersediaan tutor.');
+        return;
+      }
+    }
+
     setStep((s) => s + 1);
   };
 
@@ -184,7 +236,17 @@ export default function BookSessionPage() {
       <Stepper steps={['Tutor', 'Jadwal', 'Konfirmasi']} current={step} />
 
       <FormProvider {...methods}>
-        <form onSubmit={onSubmit} className='space-y-6'>
+        <div
+          onKeyDown={(e) => {
+            if (
+              e.key === 'Enter' &&
+              (e.target as HTMLElement).tagName !== 'TEXTAREA'
+            ) {
+              e.preventDefault();
+            }
+          }}
+          className='space-y-6'
+        >
           {step === 0 ? (
             <Card>
               <CardHeader>
@@ -319,6 +381,18 @@ export default function BookSessionPage() {
                     className='w-full'
                   />
                 </div>
+                <SelectField<BookForm>
+                  name='level'
+                  label='Jenjang'
+                  options={EDUCATION_LEVEL_OPTIONS}
+                  className='w-full'
+                />
+                <MultiToggleField<BookForm>
+                  name='subjects'
+                  label='Mata pelajaran'
+                  options={SUBJECT_OPTIONS}
+                  helperText='Pilih satu atau lebih.'
+                />
               </CardContent>
             </Card>
           ) : null}
@@ -337,6 +411,14 @@ export default function BookSessionPage() {
                 />
                 <Row label='Format' value={classFormatLabel(values.format)} />
                 <Row label='Mode' value={classModeLabel(values.mode)} />
+                <Row
+                  label='Jenjang'
+                  value={educationLevelLabel(values.level)}
+                />
+                <Row
+                  label='Mata pelajaran'
+                  value={subjectLabels(values.subjects ?? []).join(', ') || '—'}
+                />
                 <div className='border-primary-200 from-primary-50 to-primary-100 mt-3 rounded-lg border bg-gradient-to-br p-3'>
                   <div className='text-muted-foreground text-xs font-semibold tracking-wide uppercase'>
                     Total
@@ -365,12 +447,16 @@ export default function BookSessionPage() {
                 Lanjut
               </Button>
             ) : (
-              <Button type='submit' disabled={book.isPending}>
+              <Button
+                type='button'
+                onClick={handleBook}
+                disabled={book.isPending}
+              >
                 {book.isPending ? 'Memesan...' : 'Pesan Sesi'}
               </Button>
             )}
           </div>
-        </form>
+        </div>
       </FormProvider>
     </div>
   );

@@ -2,7 +2,7 @@
 
 import * as React from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { CalendarDays } from 'lucide-react';
+import { CalendarDays, Eye } from 'lucide-react';
 
 import api from '@/lib/api';
 import { Button } from '@/components/ui/button';
@@ -10,6 +10,7 @@ import {
   Table,
   TableBody,
   TableCell,
+  TableEmpty,
   TableHead,
   TableHeader,
   TableRow,
@@ -25,9 +26,14 @@ import { usePagination } from '@/hooks/use-pagination';
 import type { PaginatedApiResponse } from '@/types/api';
 import type { SessionItem } from '@/app/student/sessions/types';
 
+import { WeekCalendar } from './components/week-calendar';
+import { SessionDetailDialog } from './components/session-detail-dialog';
+
 export default function TutorSessionsPage() {
   const { params } = usePagination();
   const [past, setPast] = React.useState(false);
+  const [view, setView] = React.useState<'calendar' | 'list'>('calendar');
+  const [selected, setSelected] = React.useState<SessionItem | null>(null);
 
   const { data, isLoading } = useQuery<{
     data: SessionItem[];
@@ -51,18 +57,31 @@ export default function TutorSessionsPage() {
         title='Sesi'
         description={past ? 'Riwayat sesi mengajar.' : 'Sesi mendatang.'}
       />
-      <Tabs
-        value={past ? 'past' : 'upcoming'}
-        onValueChange={(v) => setPast(v === 'past')}
-      >
-        <TabsList>
-          <TabsTrigger value='upcoming'>Mendatang</TabsTrigger>
-          <TabsTrigger value='past'>Riwayat</TabsTrigger>
-        </TabsList>
-      </Tabs>
+
+      <div className='flex flex-wrap items-center justify-between gap-3'>
+        <Tabs
+          value={past ? 'past' : 'upcoming'}
+          onValueChange={(v) => setPast(v === 'past')}
+        >
+          <TabsList>
+            <TabsTrigger value='upcoming'>Mendatang</TabsTrigger>
+            <TabsTrigger value='past'>Riwayat</TabsTrigger>
+          </TabsList>
+        </Tabs>
+
+        <Tabs
+          value={view}
+          onValueChange={(v) => setView(v as 'calendar' | 'list')}
+        >
+          <TabsList>
+            <TabsTrigger value='calendar'>Kalender</TabsTrigger>
+            <TabsTrigger value='list'>Tabel</TabsTrigger>
+          </TabsList>
+        </Tabs>
+      </div>
 
       {isLoading ? (
-        <Skeleton className='h-40 w-full' />
+        <Skeleton className='h-96 w-full' />
       ) : empty ? (
         <EmptyState
           icon={CalendarDays}
@@ -73,36 +92,74 @@ export default function TutorSessionsPage() {
               : 'Siswa yang sudah diterima akan memesan sesi di sini.'
           }
         />
+      ) : view === 'calendar' ? (
+        <WeekCalendar sessions={data?.data ?? []} onSelect={setSelected} />
       ) : (
-        <div className='border-primary-100 overflow-hidden rounded-lg border bg-white'>
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Mulai</TableHead>
-                <TableHead>Format</TableHead>
-                <TableHead className='text-right'>Peserta</TableHead>
-                <TableHead>Status</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {data?.data.map((s) => (
-                <TableRow key={s.id}>
-                  <TableCell className='mono text-xs tabular-nums'>
-                    {formatDateTimeId(s.startsAt)}
-                  </TableCell>
-                  <TableCell>{classFormatLabel(s.format)}</TableCell>
-                  <TableCell className='mono text-right tabular-nums'>
-                    {s.attendees?.length ?? 0}
-                  </TableCell>
-                  <TableCell>
-                    <StatusBadge kind='session' status={s.status} />
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        </div>
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead>Mulai</TableHead>
+              <TableHead>Format</TableHead>
+              <TableHead>Siswa</TableHead>
+              <TableHead>Status</TableHead>
+              <TableHead></TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {data?.data.length === 0 ? (
+              <TableEmpty colSpan={5}>Tidak ada sesi.</TableEmpty>
+            ) : (
+              data?.data.map((s) => {
+                const names =
+                  s.attendees
+                    ?.map((a) => a.student?.user.name)
+                    .filter(Boolean) ?? [];
+                return (
+                  <TableRow key={s.id}>
+                    <TableCell className='mono text-xs tabular-nums'>
+                      {formatDateTimeId(s.startsAt)}
+                    </TableCell>
+                    <TableCell>{classFormatLabel(s.format)}</TableCell>
+                    <TableCell>
+                      {names.length === 0 ? (
+                        <span className='text-muted-foreground text-xs'>—</span>
+                      ) : (
+                        <div className='flex flex-col text-sm'>
+                          <span>{names[0]}</span>
+                          {names.length > 1 ? (
+                            <span className='text-muted-foreground text-xs'>
+                              +{names.length - 1} lainnya
+                            </span>
+                          ) : null}
+                        </div>
+                      )}
+                    </TableCell>
+                    <TableCell>
+                      <StatusBadge kind='session' status={s.status} />
+                    </TableCell>
+                    <TableCell className='text-right'>
+                      <Button
+                        type='button'
+                        variant='ghost'
+                        size='icon-sm'
+                        aria-label='Lihat detail'
+                        onClick={() => setSelected(s)}
+                      >
+                        <Eye className='size-4' />
+                      </Button>
+                    </TableCell>
+                  </TableRow>
+                );
+              })
+            )}
+          </TableBody>
+        </Table>
       )}
+
+      <SessionDetailDialog
+        session={selected}
+        onOpenChange={(v) => !v && setSelected(null)}
+      />
     </div>
   );
 }

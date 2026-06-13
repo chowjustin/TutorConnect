@@ -1,10 +1,18 @@
-import type { ClassFormat, ClassMode, SessionStatus } from '@/types/shared';
+import type {
+  ClassFormat,
+  ClassMode,
+  EducationLevel,
+  SessionStatus,
+  Subject,
+} from '@/types/shared';
 
 export interface SessionItem {
   id: string;
   tutorId: string;
   format: ClassFormat;
   mode: ClassMode;
+  subjects?: Subject[];
+  level?: EducationLevel | null;
   startsAt: string;
   endsAt: string;
   status: SessionStatus;
@@ -16,10 +24,11 @@ export interface SessionItem {
     id: string;
     studentId: string;
     paymentId: string | null;
-    payment: {
+    payment?: {
       id: string;
       status: 'UNDER_REVIEW' | 'CONFIRMED' | 'REJECTED' | 'REFUNDED';
     } | null;
+    student?: { user: { name: string; email?: string } };
   }>;
 }
 

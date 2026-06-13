@@ -146,6 +146,8 @@ export class SessionsService {
           endsAt: end,
           format: dto.format,
           mode: dto.mode,
+          subjects: dto.subjects,
+          level: dto.level,
           pricePerSeat: dto.pricePerSeat,
           meetingUrl: dto.meetingUrl,
           location: dto.location,
@@ -257,7 +259,7 @@ export class SessionsService {
       include: { tutorProfile: true },
     });
     if (!user?.tutorProfile) return paginated([], 0);
-    return paginatePrisma(this.prisma.session, pagination, {
+    const result = await paginatePrisma<any>(this.prisma.session, pagination, {
       where: {
         tutorId: user.tutorProfile.id,
         startsAt: past ? { lt: new Date() } : { gte: new Date() },
@@ -267,6 +269,32 @@ export class SessionsService {
       },
       orderBy: { startsAt: past ? 'desc' : 'asc' },
     });
+
+    const attendeeIds = result.data.flatMap((s: any) =>
+      s.attendees.map((a: any) => a.id),
+    );
+    const payments = attendeeIds.length
+      ? await this.prisma.payment.findMany({
+          where: { sessionAttendeeId: { in: attendeeIds } },
+          select: { id: true, sessionAttendeeId: true, status: true },
+        })
+      : [];
+    const byAttendee = new Map(payments.map((p) => [p.sessionAttendeeId, p]));
+
+    result.data = result.data.map((s: any) => ({
+      ...s,
+      attendees: s.attendees.map((a: any) => ({
+        ...a,
+        payment: byAttendee.get(a.id)
+          ? {
+              id: byAttendee.get(a.id)!.id,
+              status: byAttendee.get(a.id)!.status,
+            }
+          : null,
+      })),
+    }));
+
+    return result;
   }
 
   async ical(sessionId: string): Promise<string> {

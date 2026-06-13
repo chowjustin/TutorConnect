@@ -301,21 +301,23 @@ model MaterialAccess {
 }
 
 model Session {
-  id             String        @id @default(cuid())
+  id             String          @id @default(cuid())
   applicationId  String?
   tutorId        String
   startsAt       DateTime
   endsAt         DateTime
-  status         SessionStatus @default(SCHEDULED)
-  format         ClassFormat   @default(PRIVATE_1)
-  mode           ClassMode     @default(ONLINE)
+  status         SessionStatus   @default(SCHEDULED)
+  format         ClassFormat     @default(PRIVATE_1)
+  mode           ClassMode       @default(ONLINE)
+  subjects       Subject[]
+  level          EducationLevel?
   pricePerSeat   Int
   meetingUrl     String?
   location       String?
   notes          String?
   reminderSentAt DateTime?
-  createdAt      DateTime      @default(now())
-  updatedAt      DateTime      @updatedAt
+  createdAt      DateTime        @default(now())
+  updatedAt      DateTime        @updatedAt
 
   application    Application?  @relation(fields: [applicationId], references: [id], onDelete: SetNull)
   tutor          TutorProfile  @relation(fields: [tutorId], references: [id], onDelete: Cascade)

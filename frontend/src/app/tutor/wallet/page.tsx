@@ -58,7 +58,7 @@ export default function WalletPage() {
 
       <Card>
         <CardHeader>
-          <CardTitle>Riwayat Ledger</CardTitle>
+          <CardTitle>Riwayat Transaksi</CardTitle>
         </CardHeader>
         <CardContent>
           {isLoading ? (

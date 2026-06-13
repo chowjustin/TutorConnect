@@ -143,7 +143,6 @@ export function WeekGrid({ value, onChange }: Props) {
                 <div
                   className={cn(
                     'border-primary-100 mono text-muted-foreground border-r pr-2 text-right text-[10px] tabular-nums',
-                    !showLabel && 'invisible',
                   )}
                   style={{ lineHeight: '20px' }}
                 >
@@ -159,12 +158,12 @@ export function WeekGrid({ value, onChange }: Props) {
                       onPointerDown={onCellDown(d, i)}
                       onPointerEnter={onCellEnter(d, i)}
                       className={cn(
-                        'border-primary-100 h-5 cursor-pointer touch-none border-r last:border-r-0',
+                        'border-primary-100 h-5 cursor-pointer touch-none border-r border-solid last:border-r-0',
                         i === ROWS - 1
                           ? ''
                           : hourBoundary
                             ? 'border-b'
-                            : 'border-b-primary-100/40 border-b border-dashed',
+                            : 'border-b-primary-100/40 border-b',
                         filled
                           ? 'bg-primary-500 hover:bg-primary-600'
                           : 'hover:bg-primary-50 bg-white',
