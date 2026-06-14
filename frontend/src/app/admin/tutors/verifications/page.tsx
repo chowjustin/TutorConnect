@@ -20,6 +20,7 @@ import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { EmptyState } from '@/components/ui/empty-state';
 import { ImageLightbox } from '@/components/ui/image-lightbox';
 import { ConfirmDialog } from '@/components/ui/confirm-dialog';
+import { StatusBadge } from '@/components/ui/status-badge';
 import { resolveFileUrl } from '@/lib/file-url';
 import { usePagination } from '@/hooks/use-pagination';
 import { notifyAxiosError, notifySuccess } from '@/lib/toast';
@@ -40,6 +41,7 @@ export default function AdminVerificationsPage() {
   const [history, setHistory] = React.useState(false);
 
   const [slides, setSlides] = React.useState<{ src: string }[]>([]);
+  const [slideIndex, setSlideIndex] = React.useState(0);
   const [open, setOpen] = React.useState(false);
   const [approveTarget, setApproveTarget] = React.useState<string | null>(null);
   const [rejectTarget, setRejectTarget] = React.useState<string | null>(null);
@@ -84,13 +86,15 @@ export default function AdminVerificationsPage() {
     onError: (e) => notifyAxiosError(e),
   });
 
-  const showDocs = (v: VerificationItem) => {
+  const openDoc = (v: VerificationItem, which: 'id' | 'edu') => {
     const list: { src: string }[] = [];
     if (v.idDocumentUrl) list.push({ src: resolveFileUrl(v.idDocumentUrl) });
     if (v.educationProofUrl)
       list.push({ src: resolveFileUrl(v.educationProofUrl) });
     if (!list.length) return;
+    const idx = which === 'id' ? 0 : v.idDocumentUrl ? 1 : 0;
     setSlides(list);
+    setSlideIndex(idx);
     setOpen(true);
   };
 
@@ -130,7 +134,8 @@ export default function AdminVerificationsPage() {
           <TableHeader>
             <TableRow>
               <TableHead>Tutor</TableHead>
-              <TableHead>Dokumen</TableHead>
+              <TableHead>KTP</TableHead>
+              <TableHead>Ijazah</TableHead>
               <TableHead></TableHead>
             </TableRow>
           </TableHeader>
@@ -144,33 +149,38 @@ export default function AdminVerificationsPage() {
                   </div>
                 </TableCell>
                 <TableCell>
-                  {v.idDocumentUrl || v.educationProofUrl ? (
-                    <button
-                      type='button'
-                      onClick={() => showDocs(v)}
-                      className='text-primary-600 hover:text-primary-700 inline-flex items-center gap-1 text-xs font-medium'
+                  {v.idDocumentUrl ? (
+                    <Button
+                      size='sm'
+                      variant='outline'
+                      onClick={() => openDoc(v, 'id')}
                     >
-                      <ZoomIn className='size-3.5' /> Lihat dokumen
-                    </button>
+                      <ZoomIn className='size-3.5' /> Lihat
+                    </Button>
                   ) : (
-                    <span className='text-muted-foreground text-xs'>
-                      Belum upload
-                    </span>
+                    <span className='text-muted-foreground text-xs'>—</span>
+                  )}
+                </TableCell>
+                <TableCell>
+                  {v.educationProofUrl ? (
+                    <Button
+                      size='sm'
+                      variant='outline'
+                      onClick={() => openDoc(v, 'edu')}
+                    >
+                      <ZoomIn className='size-3.5' /> Lihat
+                    </Button>
+                  ) : (
+                    <span className='text-muted-foreground text-xs'>—</span>
                   )}
                 </TableCell>
                 <TableCell>
                   {history ? (
-                    <span
-                      className={`inline-flex items-center rounded-full border px-2 py-0.5 text-xs font-medium ${
-                        v.verificationStatus === 'VERIFIED'
-                          ? 'border-emerald-200 bg-emerald-50 text-emerald-700'
-                          : 'border-rose-200 bg-rose-50 text-rose-700'
-                      }`}
-                    >
-                      {v.verificationStatus === 'VERIFIED'
-                        ? 'Disetujui'
-                        : 'Ditolak'}
-                    </span>
+                    <StatusBadge
+                      kind='verification'
+                      status={v.verificationStatus ?? 'PENDING'}
+                      size='sm'
+                    />
                   ) : (
                     <div className='flex gap-2'>
                       <Button size='sm' onClick={() => setApproveTarget(v.id)}>
@@ -196,6 +206,7 @@ export default function AdminVerificationsPage() {
         open={open}
         onClose={() => setOpen(false)}
         slides={slides}
+        index={slideIndex}
       />
 
       <ConfirmDialog

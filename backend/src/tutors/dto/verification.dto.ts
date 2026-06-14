@@ -1,13 +1,13 @@
-import { IsEnum, IsNotEmpty, IsOptional, IsString, IsUrl } from 'class-validator';
+import { IsEnum, IsNotEmpty, IsOptional, IsString } from 'class-validator';
 import { VerificationStatus } from '@prisma/client';
 
 export class SubmitVerificationDto {
   @IsNotEmpty()
-  @IsUrl()
+  @IsString()
   idDocumentUrl: string;
 
   @IsNotEmpty()
-  @IsUrl()
+  @IsString()
   educationProofUrl: string;
 }
 

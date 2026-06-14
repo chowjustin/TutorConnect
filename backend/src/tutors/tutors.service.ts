@@ -265,7 +265,10 @@ export class TutorsService {
 
     const tutors = await this.prisma.tutorProfile.findMany({
       where: { AND: filters },
-      include: { user: true, featuredListing: true },
+      include: {
+        user: { include: { subscription: true } },
+        featuredListing: true,
+      },
     });
 
     // attach average rating
@@ -282,12 +285,17 @@ export class TutorsService {
       ]),
     );
 
+    const now = new Date();
     let enriched = tutors.map((t) => ({
       ...t,
       averageRating: rMap.get(t.id)?.avg ?? 0,
       reviewCount: rMap.get(t.id)?.count ?? 0,
       featured:
-        !!t.featuredListing && t.featuredListing.activeUntil > new Date(),
+        !!t.featuredListing && t.featuredListing.activeUntil > now,
+      isPro:
+        t.user.subscription?.tier === 'PRO_TUTOR' &&
+        !!t.user.subscription.expiresAt &&
+        t.user.subscription.expiresAt > now,
     }));
 
     if (opts.minRating !== undefined) {
@@ -303,9 +311,10 @@ export class TutorsService {
     } else if (sortBy === 'priceDesc') {
       enriched.sort((a, b) => (b.hourlyRate ?? 0) - (a.hourlyRate ?? 0));
     } else {
-      // featured first, then rating
+      // featured first, then pro tutors, then rating
       enriched.sort((a, b) => {
         if (a.featured !== b.featured) return a.featured ? -1 : 1;
+        if (a.isPro !== b.isPro) return a.isPro ? -1 : 1;
         return b.averageRating - a.averageRating;
       });
     }

@@ -71,6 +71,27 @@ export class ReferralsService {
     });
   }
 
+  async listForAdmin(status?: 'PENDING' | 'GRANTED') {
+    const rewards = await this.prisma.referralReward.findMany({
+      where: status ? { status } : {},
+      orderBy: { createdAt: 'desc' },
+      take: 100,
+    });
+    const userIds = Array.from(
+      new Set(rewards.flatMap((r) => [r.referrerId, r.referredId])),
+    );
+    const users = await this.prisma.user.findMany({
+      where: { id: { in: userIds } },
+      select: { id: true, name: true, email: true, role: true },
+    });
+    const byId = new Map(users.map((u) => [u.id, u]));
+    return rewards.map((r) => ({
+      ...r,
+      referrer: byId.get(r.referrerId) ?? null,
+      referred: byId.get(r.referredId) ?? null,
+    }));
+  }
+
   async grant(rewardId: string) {
     const reward = await this.prisma.referralReward.findUnique({
       where: { id: rewardId },

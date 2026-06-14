@@ -12,6 +12,7 @@ import {
 } from 'lucide-react';
 
 import api from '@/lib/api';
+import { VerificationBanner } from '@/components/tutor/verification-banner';
 import { BentoTile } from '@/components/ui/bento-tile';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -56,6 +57,8 @@ export default function TutorDashboardPage() {
           Ringkasan penghasilan, aplikasi, dan jadwal Anda.
         </p>
       </header>
+
+      <VerificationBanner />
 
       <div className='grid grid-cols-2 gap-4 md:grid-cols-4 md:gap-5'>
         {/* Big tile: earnings this month */}

@@ -15,6 +15,7 @@ import { Dropzone } from '@/components/form/dropzone-field';
 import { notifyAxiosError, notifySuccess } from '@/lib/toast';
 import { uploadFile, type UploadResult } from '@/lib/upload';
 import { useTutorProfile } from '@/app/tutor/profile/hooks/query';
+import { resolveFileUrl } from '@/lib/file-url';
 
 function useUploadDoc() {
   return useMutation({
@@ -74,13 +75,27 @@ export default function TutorVerificationPage() {
           </CardHeader>
           <CardContent className='space-y-4'>
             {profile.verificationStatus === 'VERIFIED' ? (
-              <p className='text-sm text-emerald-700'>
-                Akun Anda terverifikasi pada{' '}
-                {profile.verifiedAt
-                  ? new Date(profile.verifiedAt).toLocaleDateString('id-ID')
-                  : '-'}
-                . Anda dapat mempublikasikan profil.
-              </p>
+              <div className='space-y-4'>
+                <p className='text-sm text-emerald-700'>
+                  Akun Anda terverifikasi pada{' '}
+                  {profile.verifiedAt
+                    ? new Date(profile.verifiedAt).toLocaleDateString('id-ID')
+                    : '-'}
+                  . Anda dapat mempublikasikan profil.
+                </p>
+                <div className='grid gap-4 sm:grid-cols-2'>
+                  <ReadOnlyDoc
+                    label='Dokumen Identitas (KTP)'
+                    url={profile.idDocumentUrl}
+                    onPreview={(u) => setLightbox(u)}
+                  />
+                  <ReadOnlyDoc
+                    label='Bukti Pendidikan (Ijazah)'
+                    url={profile.educationProofUrl}
+                    onPreview={(u) => setLightbox(u)}
+                  />
+                </div>
+              </div>
             ) : profile.verificationStatus === 'PENDING' &&
               profile.idDocumentUrl ? (
               <p className='text-muted-foreground text-sm'>
@@ -116,18 +131,11 @@ export default function TutorVerificationPage() {
                 onClick={() => submit.mutate()}
                 disabled={!idDoc || !eduDoc || submit.isPending}
               >
-                {submit.isPending ? 'Mengirim...' : 'Kirim untuk Diverifikasi'}
-              </Button>
-            ) : null}
-
-            {profile.verificationStatus === 'REJECTED' ? (
-              <Button
-                variant='outline'
-                onClick={() =>
-                  qc.invalidateQueries({ queryKey: ['/tutors/profile'] })
-                }
-              >
-                Ajukan Ulang
+                {submit.isPending
+                  ? 'Mengirim...'
+                  : profile.verificationStatus === 'REJECTED'
+                    ? 'Kirim Ulang'
+                    : 'Kirim untuk Diverifikasi'}
               </Button>
             ) : null}
           </CardContent>
@@ -139,6 +147,45 @@ export default function TutorVerificationPage() {
         onClose={() => setLightbox(null)}
         slides={lightbox ? [{ src: lightbox }] : []}
       />
+    </div>
+  );
+}
+
+function ReadOnlyDoc({
+  label,
+  url,
+  onPreview,
+}: {
+  label: string;
+  url: string | null;
+  onPreview: (u: string) => void;
+}) {
+  if (!url) {
+    return (
+      <div className='space-y-1.5'>
+        <div className='text-sm font-medium'>{label}</div>
+        <div className='border-primary-100 text-muted-foreground flex h-20 items-center justify-center rounded-lg border border-dashed text-xs'>
+          Dokumen tidak tersedia
+        </div>
+      </div>
+    );
+  }
+  const resolved = resolveFileUrl(url);
+  return (
+    <div className='space-y-1.5'>
+      <div className='text-sm font-medium'>{label}</div>
+      <button
+        type='button'
+        onClick={() => onPreview(resolved)}
+        className='border-primary-200 bg-primary-50/30 hover:border-primary-300 flex w-full items-center gap-3 rounded-lg border p-3 text-left transition-colors'
+      >
+        <div className='border-primary-200 size-14 shrink-0 overflow-hidden rounded-md border bg-white'>
+          <img src={resolved} alt={label} className='size-full object-cover' />
+        </div>
+        <div className='min-w-0 flex-1 truncate text-xs'>
+          {url.split('/').pop()}
+        </div>
+      </button>
     </div>
   );
 }

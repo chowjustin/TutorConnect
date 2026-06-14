@@ -234,14 +234,14 @@ export default function AdminPromoPage() {
                     {!p.active ? (
                       <Badge
                         variant='secondary'
-                        className='border border-rose-200 bg-rose-50 text-rose-700'
+                        className='border border-red-200 bg-red-50 text-red-800'
                       >
                         Nonaktif
                       </Badge>
                     ) : usable ? (
                       <Badge
                         variant='secondary'
-                        className='border border-emerald-200 bg-emerald-50 text-emerald-700'
+                        className='border border-emerald-200 bg-emerald-50 text-emerald-800'
                       >
                         Aktif
                       </Badge>
@@ -255,7 +255,7 @@ export default function AdminPromoPage() {
                     ) : (
                       <Badge
                         variant='secondary'
-                        className='border border-amber-200 bg-amber-50 text-amber-700'
+                        className='border border-amber-200 bg-amber-50 text-amber-800'
                       >
                         Habis
                       </Badge>

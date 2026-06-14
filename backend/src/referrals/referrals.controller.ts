@@ -3,6 +3,7 @@ import {
   Get,
   Param,
   Post,
+  Query,
   Request,
   UseGuards,
 } from '@nestjs/common';
@@ -20,6 +21,13 @@ export class ReferralsController {
   @Get('me/referrals')
   mine(@Request() req) {
     return this.svc.getMine(req.user.sub);
+  }
+
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(UserRole.ADMIN)
+  @Get('admin/referrals')
+  list(@Query('status') status?: 'PENDING' | 'GRANTED') {
+    return this.svc.listForAdmin(status);
   }
 
   @UseGuards(JwtAuthGuard, RolesGuard)

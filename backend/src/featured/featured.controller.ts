@@ -1,4 +1,11 @@
-import { Body, Controller, Post, Request, UseGuards } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Get,
+  Post,
+  Request,
+  UseGuards,
+} from '@nestjs/common';
 import { IsInt, Max, Min } from 'class-validator';
 import { UserRole } from '@prisma/client';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
@@ -15,6 +22,25 @@ class RequestFeaturedDto {
 @Controller('featured')
 export class FeaturedController {
   constructor(private readonly svc: FeaturedService) {}
+
+  @Roles(UserRole.TUTOR)
+  @Get('me')
+  me(@Request() req) {
+    return this.svc.getMine(req.user.email);
+  }
+
+  @Roles(UserRole.TUTOR)
+  @Get('pending')
+  async pending(@Request() req) {
+    const p = await this.svc.hasPending(req.user.sub);
+    return { pending: p };
+  }
+
+  @Roles(UserRole.TUTOR)
+  @Get('history')
+  history(@Request() req) {
+    return this.svc.listMyHistory(req.user.sub);
+  }
 
   @Roles(UserRole.TUTOR)
   @Post('request')

@@ -1,5 +1,9 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
-import { PlanTier } from '@prisma/client';
+import {
+  BadRequestException,
+  ForbiddenException,
+  Injectable,
+} from '@nestjs/common';
+import { PaymentKind, PaymentStatus, PlanTier, UserRole } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 
 @Injectable()
@@ -14,11 +18,40 @@ export class SubscriptionService {
     return sub;
   }
 
+  async hasPending(userId: string) {
+    const pending = await this.prisma.payment.findFirst({
+      where: {
+        payerId: userId,
+        kind: PaymentKind.SUBSCRIPTION,
+        status: PaymentStatus.UNDER_REVIEW,
+      },
+      orderBy: { createdAt: 'desc' },
+    });
+    return pending;
+  }
+
   /** Returns refId, kind and amount for the FE checkout flow. */
-  prepareRequest(tier: PlanTier) {
+  async prepareRequest(userId: string, role: UserRole, tier: PlanTier) {
     if (tier === PlanTier.FREE) {
-      throw new NotFoundException('Cannot purchase FREE');
+      throw new BadRequestException('Cannot purchase FREE');
     }
+
+    if (tier === PlanTier.PREMIUM_STUDENT && role !== UserRole.STUDENT) {
+      throw new ForbiddenException(
+        'PREMIUM_STUDENT hanya untuk akun siswa',
+      );
+    }
+    if (tier === PlanTier.PRO_TUTOR && role !== UserRole.TUTOR) {
+      throw new ForbiddenException('PRO_TUTOR hanya untuk akun tutor');
+    }
+
+    const pending = await this.hasPending(userId);
+    if (pending) {
+      throw new BadRequestException(
+        'Masih ada permintaan langganan yang sedang ditinjau',
+      );
+    }
+
     const PRICES: Record<Exclude<PlanTier, 'FREE'>, number> = {
       PREMIUM_STUDENT: parseInt(
         process.env.PRICE_PREMIUM_STUDENT || '50000',
@@ -33,6 +66,14 @@ export class SubscriptionService {
     };
   }
 
+  async listMyHistory(userId: string) {
+    return this.prisma.payment.findMany({
+      where: { payerId: userId, kind: PaymentKind.SUBSCRIPTION },
+      orderBy: { createdAt: 'desc' },
+      take: 20,
+    });
+  }
+
   async expireOldCron() {
     await this.prisma.subscription.updateMany({
       where: { expiresAt: { lt: new Date() }, tier: { not: PlanTier.FREE } },
@@ -40,3 +81,4 @@ export class SubscriptionService {
     });
   }
 }
+
