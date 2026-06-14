@@ -27,24 +27,11 @@ export function TutorCard({
       href={`/student/tutors/${tutor.id}`}
       className='group border-primary-100 hover:border-primary-300 hover:shadow-primary-500/5 focus-visible:ring-primary-400 relative block overflow-hidden rounded-xl border bg-white p-5 transition-all hover:shadow-md focus-visible:ring-2 focus-visible:outline-none'
     >
-      <div className='absolute top-3 right-3 flex flex-wrap items-center justify-end gap-1.5'>
-        {applicationStatus ? (
-          <span
-            className={`rounded-full border px-2 py-0.5 text-[10px] font-medium tracking-wide uppercase ${
-              applicationStatus === 'ACCEPTED'
-                ? 'border-emerald-200 bg-emerald-50 text-emerald-700'
-                : 'border-primary-200 bg-primary-50 text-primary-800'
-            }`}
-          >
-            {applicationStatus === 'ACCEPTED' ? 'Diterima' : 'Sudah diajukan'}
-          </span>
-        ) : null}
-        {tutor.featured ? (
-          <span className='bg-secondary-100 text-secondary-800 border-secondary-200 rounded-full border px-2 py-0.5 text-[10px] font-medium tracking-wide uppercase'>
-            Featured
-          </span>
-        ) : null}
-      </div>
+      {tutor.featured ? (
+        <span className='bg-secondary-100 text-secondary-800 border-secondary-200 absolute top-3 right-3 rounded-full border px-2 py-0.5 text-[10px] font-medium tracking-wide uppercase'>
+          Featured
+        </span>
+      ) : null}
 
       <div className='flex gap-4'>
         <Avatar className='ring-primary-100 size-16 shrink-0 ring-2'>
@@ -98,6 +85,27 @@ export function TutorCard({
           </span>
         ) : null}
       </div>
+
+      {applicationStatus || tutor.isPro ? (
+        <div className='border-primary-100 mt-3 flex flex-wrap items-center gap-1.5 border-t pt-3'>
+          {tutor.isPro ? (
+            <span className='border-primary-300 bg-primary-100 text-primary-800 rounded-full border px-2 py-0.5 text-[10px] font-medium tracking-wide uppercase'>
+              Pro
+            </span>
+          ) : null}
+          {applicationStatus ? (
+            <span
+              className={`rounded-full border px-2 py-0.5 text-[10px] font-medium tracking-wide uppercase ${
+                applicationStatus === 'ACCEPTED'
+                  ? 'border-emerald-200 bg-emerald-50 text-emerald-800'
+                  : 'border-amber-200 bg-amber-50 text-amber-800'
+              }`}
+            >
+              {applicationStatus === 'ACCEPTED' ? 'Diterima' : 'Sudah diajukan'}
+            </span>
+          ) : null}
+        </div>
+      ) : null}
     </Link>
   );
 }

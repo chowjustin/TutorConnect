@@ -17,7 +17,7 @@ import { Roles } from '../auth/roles.decorator';
 import { ApplicationsService } from './applications.service';
 import { CreateApplicationDto } from './dto/create-application.dto';
 import { UpdateApplicationStatusDto } from './dto/update-application.dto';
-import { PaginationQueryDto } from '../common/dto/pagination.dto';
+import { ListApplicationsQueryDto } from './dto/list-applications.query.dto';
 
 @UseGuards(JwtAuthGuard, RolesGuard)
 @Controller('applications')
@@ -38,14 +38,24 @@ export class ApplicationsController {
 
   @Roles(UserRole.STUDENT)
   @Get('student')
-  listForStudent(@Request() req, @Query() pagination: PaginationQueryDto) {
-    return this.apps.listForStudent(req.user.email, pagination);
+  listForStudent(
+    @Request() req,
+    @Query() query: ListApplicationsQueryDto,
+  ) {
+    return this.apps.listForStudent(req.user.email, query, {
+      status: query.status,
+    });
   }
 
   @Roles(UserRole.TUTOR)
   @Get('tutor')
-  listForTutor(@Request() req, @Query() pagination: PaginationQueryDto) {
-    return this.apps.listForTutor(req.user.email, pagination);
+  listForTutor(
+    @Request() req,
+    @Query() query: ListApplicationsQueryDto,
+  ) {
+    return this.apps.listForTutor(req.user.email, query, {
+      status: query.status,
+    });
   }
 
   @Roles(UserRole.TUTOR)

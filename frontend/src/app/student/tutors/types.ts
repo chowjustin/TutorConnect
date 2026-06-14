@@ -1,8 +1,4 @@
-import type {
-  EducationLevel,
-  Subject,
-  TeachingMethod,
-} from '@/types/shared';
+import type { EducationLevel, Subject, TeachingMethod } from '@/types/shared';
 
 export interface TutorSearchItem {
   id: string;
@@ -14,6 +10,7 @@ export interface TutorSearchItem {
   averageRating: number;
   reviewCount: number;
   featured: boolean;
+  isPro?: boolean;
   user: { id: string; name: string; email: string };
 }
 

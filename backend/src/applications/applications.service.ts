@@ -115,15 +115,26 @@ export class ApplicationsService {
     return this.prisma.application.delete({ where: { id: applicationId } });
   }
 
-  async listForStudent(studentEmail: string, pagination: PaginationQueryDto) {
+  async listForStudent(
+    studentEmail: string,
+    pagination: PaginationQueryDto,
+    filters?: { status?: ApplicationStatus },
+  ) {
     return paginatePrisma(this.prisma.application, pagination, {
-      where: { student: { user: { email: studentEmail } } },
+      where: {
+        student: { user: { email: studentEmail } },
+        ...(filters?.status ? { status: filters.status } : {}),
+      },
       include: { tutor: { include: { user: true } } },
       orderBy: { createdAt: 'desc' },
     });
   }
 
-  async listForTutor(tutorEmail: string, pagination: PaginationQueryDto) {
+  async listForTutor(
+    tutorEmail: string,
+    pagination: PaginationQueryDto,
+    filters?: { status?: ApplicationStatus },
+  ) {
     const user = await this.prisma.user.findUnique({
       where: { email: tutorEmail },
       include: { tutorProfile: true },
@@ -134,7 +145,10 @@ export class ApplicationsService {
     }
 
     return paginatePrisma(this.prisma.application, pagination, {
-      where: { tutorId: user.tutorProfile.id },
+      where: {
+        tutorId: user.tutorProfile.id,
+        ...(filters?.status ? { status: filters.status } : {}),
+      },
       include: { student: { include: { user: true } } },
       orderBy: { createdAt: 'desc' },
     });

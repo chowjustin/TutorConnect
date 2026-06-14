@@ -143,8 +143,8 @@ export default function StudentTutorDetailPage() {
                   variant='secondary'
                   className={
                     existingStatus === 'ACCEPTED'
-                      ? 'border border-emerald-200 bg-emerald-50 text-emerald-700'
-                      : 'border-primary-200 bg-primary-100 text-primary-800 border'
+                      ? 'border border-emerald-200 bg-emerald-50 text-emerald-800'
+                      : 'border border-amber-200 bg-amber-50 text-amber-800'
                   }
                 >
                   {existingStatus === 'ACCEPTED' ? 'Diterima' : 'Menunggu'}
