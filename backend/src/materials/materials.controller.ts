@@ -4,23 +4,31 @@ import {
   ForbiddenException,
   Get,
   Param,
+  Patch,
   Post,
   Query,
   Req,
   UseGuards,
 } from '@nestjs/common';
+import { IsArray, IsString } from 'class-validator';
 import { UserRole } from '@prisma/client';
 import type { Request } from 'express';
 import { MaterialsService } from './materials.service';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { RolesGuard } from '../auth/roles.guard';
 import { Roles } from '../auth/roles.decorator';
-import { CreateMaterialDto } from './dto/create-material.dto';
+import { CreateMaterialDto, UpdateMaterialDto } from './dto/create-material.dto';
 import { MaterialFilterQueryDto } from './dto/material-filter.query.dto';
 
 type AuthedRequest = Request & {
   user: { sub: string; email: string; role: UserRole };
 };
+
+class UpdateAccessDto {
+  @IsArray()
+  @IsString({ each: true })
+  studentIds: string[];
+}
 
 @UseGuards(JwtAuthGuard, RolesGuard)
 @Controller('materials')
@@ -43,6 +51,7 @@ export class MaterialsController {
         level: body.level,
         kind: body.kind,
         description: body.description,
+        isPremium: body.isPremium,
       },
     );
   }
@@ -62,7 +71,41 @@ export class MaterialsController {
       subject: query.subject,
       level: query.level,
       kind: query.kind,
+      isPremium: query.isPremium,
     });
+  }
+
+  @Roles(UserRole.TUTOR)
+  @Patch(':materialId')
+  async updateMaterial(
+    @Req() req: AuthedRequest,
+    @Param('materialId') materialId: string,
+    @Body() body: UpdateMaterialDto,
+  ) {
+    return this.materialsService.updateMaterial(req.user.sub, materialId, body);
+  }
+
+  @Roles(UserRole.TUTOR)
+  @Get(':materialId/access')
+  async getAccess(
+    @Req() req: AuthedRequest,
+    @Param('materialId') materialId: string,
+  ) {
+    return this.materialsService.getAccess(req.user.sub, materialId);
+  }
+
+  @Roles(UserRole.TUTOR)
+  @Patch(':materialId/access')
+  async updateAccess(
+    @Req() req: AuthedRequest,
+    @Param('materialId') materialId: string,
+    @Body() dto: UpdateAccessDto,
+  ) {
+    return this.materialsService.updateAccess(
+      req.user.sub,
+      materialId,
+      dto.studentIds,
+    );
   }
 
   @Get('student/:studentProfileId')
@@ -83,6 +126,7 @@ export class MaterialsController {
         subject: query.subject,
         level: query.level,
         kind: query.kind,
+        isPremium: query.isPremium,
       },
     );
   }

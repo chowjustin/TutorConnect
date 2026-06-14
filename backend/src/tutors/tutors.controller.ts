@@ -84,13 +84,15 @@ export class TutorsController {
     return this.tutorsService.update(id, updateTutorDto, req.user.sub);
   }
 
-  @Get(':email/students')
-  async listAllStudents(
-    @Param('email') email: string,
+  @Roles(UserRole.TUTOR)
+  @Get('me/students')
+  async listMyStudents(
+    @Request() req,
     @Query() pagination: PaginationQueryDto,
   ) {
-    return this.tutorsService.listAllStudents(email, pagination);
+    return this.tutorsService.listAllStudents(req.user.email, pagination);
   }
+
 
   @Roles(UserRole.TUTOR)
   @Delete('students/:studentId')

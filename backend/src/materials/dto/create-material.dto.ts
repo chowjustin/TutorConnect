@@ -48,4 +48,41 @@ export class CreateMaterialDto {
   @IsOptional()
   @IsString()
   description?: string;
+
+  @ApiPropertyOptional({
+    description: 'Mark as premium (only Premium Siswa subscribers can view).',
+  })
+  @IsOptional()
+  isPremium?: boolean;
+}
+
+export class UpdateMaterialDto {
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsString()
+  title?: string;
+
+  @ApiPropertyOptional({ enum: Subject })
+  @IsOptional()
+  @IsEnum(Subject)
+  subject?: Subject;
+
+  @ApiPropertyOptional({ enum: EducationLevel })
+  @IsOptional()
+  @IsEnum(EducationLevel)
+  level?: EducationLevel;
+
+  @ApiPropertyOptional({ enum: MaterialKind })
+  @IsOptional()
+  @IsEnum(MaterialKind)
+  kind?: MaterialKind;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsString()
+  description?: string;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  isPremium?: boolean;
 }

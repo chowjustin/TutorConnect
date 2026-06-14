@@ -105,17 +105,6 @@ describe('TutorsController', () => {
     });
   });
 
-  describe('listAllStudents', () => {
-    it('should return all students of the tutor', async () => {
-      const mockStudents = [{ id: 's1', name: 'Student 1', email: 's1@test.com' }];
-      mockService.listAllStudents.mockResolvedValue(mockStudents);
-
-      const result = await controller.listAllStudents('tutor@test.com');
-      expect(result).toBe(mockStudents);
-      expect(mockService.listAllStudents).toHaveBeenCalledWith('tutor@test.com');
-    });
-  });
-
   describe('removeStudent', () => {
     it('should remove student successfully', async () => {
       const req = { user: { email: 'tutor@test.com' } };

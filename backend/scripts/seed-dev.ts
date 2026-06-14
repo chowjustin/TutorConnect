@@ -19,13 +19,27 @@ const prisma = new PrismaClient();
 const DEFAULT_PASSWORD = 'password123';
 const ADMIN_PASSWORD = 'password123';
 
+import { randomBytes } from 'crypto';
+
+function generateReferralCode() {
+  return randomBytes(4).toString('hex').toUpperCase();
+}
+
 async function ensureUser(
   email: string,
   role: UserRole,
   data: { name: string; phone: string; password?: string },
 ) {
   const existing = await prisma.user.findUnique({ where: { email } });
-  if (existing) return existing;
+  if (existing) {
+    if (!existing.referralCode) {
+      return prisma.user.update({
+        where: { id: existing.id },
+        data: { referralCode: generateReferralCode() },
+      });
+    }
+    return existing;
+  }
   return prisma.user.create({
     data: {
       email,
@@ -34,6 +48,7 @@ async function ensureUser(
       phoneNumber: data.phone,
       role,
       emailVerifiedAt: new Date(),
+      referralCode: generateReferralCode(),
     },
   });
 }
@@ -71,6 +86,10 @@ async function ensureTutorProfile(
       verificationStatus: data.verification,
       verifiedAt: isVerified ? new Date() : null,
       publishedAt: isVerified && data.publish ? new Date() : null,
+      idDocumentUrl: isVerified ? 'seed/verification/sample-ktp.jpg' : null,
+      educationProofUrl: isVerified
+        ? 'seed/verification/sample-ijazah.jpg'
+        : null,
       bankName: 'BCA',
       bankAccountNumber: '1234567890',
       bankAccountHolder: data.bankHolder,

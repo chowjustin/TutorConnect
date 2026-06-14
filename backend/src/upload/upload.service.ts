@@ -106,7 +106,7 @@ export class UploadService {
 
     const user = await this.prisma.user.findUnique({
       where: { id: requesterId },
-      include: { tutorProfile: true },
+      include: { tutorProfile: true, subscription: true },
     });
 
     if (!user) throw new NotFoundException('User not found');
@@ -122,6 +122,20 @@ export class UploadService {
 
     if (!isTutorOwner && !isStudentAssigned) {
       throw new ForbiddenException('Access denied');
+    }
+
+    if (
+      material.isPremium &&
+      user.role === UserRole.STUDENT &&
+      !(
+        user.subscription?.tier === 'PREMIUM_STUDENT' &&
+        user.subscription.expiresAt &&
+        user.subscription.expiresAt > new Date()
+      )
+    ) {
+      throw new ForbiddenException(
+        'Materi premium hanya untuk pelanggan Premium Siswa',
+      );
     }
 
     return material;

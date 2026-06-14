@@ -11,21 +11,24 @@ export function useUploadMaterial() {
   return useMutation({
     mutationFn: async (values: {
       file: File;
+      title?: string;
       subject?: string;
       level?: string;
       kind?: string;
       description?: string;
       allowedStudents?: string[];
+      isPremium?: boolean;
     }) => {
       const uploaded = await uploadFile(values.file, 'material');
       const res = await api.post('/materials', {
         fileUrl: uploaded.file_url,
-        originalName: values.file.name,
+        originalName: values.title || values.file.name,
         subject: values.subject,
         level: values.level,
         kind: values.kind,
         description: values.description,
         allowedStudents: values.allowedStudents,
+        isPremium: values.isPremium,
       });
       return res.data;
     },
